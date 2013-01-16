@@ -1,7 +1,7 @@
 moves = require "moves"
 Consts = require "balance"
 
-Dude = Class{
+local Dude = Class{
 	name = "dude",
 	function(self, x, y)
 		self.x = x or 100
@@ -12,7 +12,7 @@ Dude = Class{
 		self.joyy = 0
 		self.hp = Consts.health
 		
-		self.move = moves.idle(self)
+		self.move = moves.cooldown(self, Consts.initialcountdown)
 		self.boolets = {}
 		self.bnum = 0
 	end
@@ -32,6 +32,15 @@ end
 
 function Dude:draw()
 	self.move:draw()
+end
+
+function Dude:hurt()
+	self.hp = self.hp - Consts.bulletdmg
+	if self.hp <= 0 then
+		printf("%s win the viddy gam :D", self.other.name)
+		self.other.wins = self.other.wins + 1
+		justlikemakegame()
+	end
 end
 
 return Dude

@@ -1,9 +1,10 @@
 Class = require "hump.class"
+lvec = require "hump.vector-light"
 Consts = require "balance"
 
-Boolets = {}
-bnum = 0
-Boolet = Class{
+local Boolets = {}
+local bnum = 0
+local Boolet = Class{
 	name = "bullet",
 	function(self, owner)
 		self.owner = owner
@@ -16,7 +17,23 @@ Boolet = Class{
 	end
 }
 
-Boolet.boolets = Boolets --FIXME: make this a proper read only iterable
+function Boolet.reset()
+	print("sup")
+	Boolets = {}
+	bnum = 0
+end
+
+function Boolet.updateall(dt, me, you)
+	for k, v in pairs(Boolets) do
+		v:update(dt, me, you)
+	end
+end
+
+function Boolet.drawall()
+	for k, v in pairs(Boolets) do
+		v:draw()
+	end
+end
 
 function Boolet:point(xx, yy)
 	local v = Vec(xx, yy)
@@ -30,12 +47,14 @@ end
 function Boolet:update(dt, me, you)
 	self.x = self.x + self.vx
 	self.y = self.y + self.vy
-	if self:isTouching(me) then
-		me.hp = me.hp - Consts.bulletdmg
+	if self:isTouching(me) and me ~= self.owner then
+		me:hurt(Consts.bulletdmg)
+		Boolets[self.hsh] = nil
 	end
 	
-	if self:isTouching(you) then
-		you.hp = you.hp - Consts.bulletdmg
+	if self:isTouching(you) and you ~= self.owner then
+		you:hurt(Consts.bulletdmg)
+		Boolets[self.hsh] = nil
 	end
 	
 	self.t = self.t - dt
@@ -45,7 +64,8 @@ function Boolet:update(dt, me, you)
 end
 
 function Boolet:isTouching(dude)
-	
+	assert(dude.w)
+	return lvec.len2(self.x-dude.x,self.y-dude.y) < dude.w * dude.w
 end
 
 function Boolet:draw()

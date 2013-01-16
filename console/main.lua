@@ -1,5 +1,5 @@
 local _print = print
-local Console = require "console"
+local Console = require "console.console"
 console = nil
 input   = nil
 output  = nil
@@ -10,7 +10,7 @@ local function error_handler(msg)
 end
 
 function love.load()
-	love.keyboard.setKeyRepeat(150, 50)
+	love.keyboard.setKeyRepeat(.150, .050)
 	love.graphics.setBackgroundColor(34,34,34)
 	local font = love.graphics.newFont('VeraMono.ttf', 14)
 	console = Console.new(font)

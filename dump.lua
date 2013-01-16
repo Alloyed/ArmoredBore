@@ -1,8 +1,7 @@
 -- This looks like the source: 
 -- http://twolivesleft.com/Codea/Talk/discussion/138/code-for-pretty-printing-a-table-for-example-the-table-containing-all-global-variables/p1
-misc = {}
 -- print contents of a table, with keys sorted. second parameter is optional, used for indenting subtables
-function misc.dump(t,indent)
+function dump(t,indent)
     local names = {}
     if not indent then indent = "" end
     for n,g in pairs(t) do
@@ -29,7 +28,7 @@ function misc.dump(t,indent)
 end
 
 --handle is a bit of convenience for the receive functions in the networking code
-function misc.handle(handler, handlee)
+function handle(handler, handlee)
 	data = {handlee()}
 	while data and data[1] do
 		misc.dump (data)
@@ -41,4 +40,4 @@ function misc.handle(handler, handlee)
 	end
 end
 
-return misc
+return dump

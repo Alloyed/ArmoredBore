@@ -1,5 +1,6 @@
 --FIXME: properly inherit for movesets instead of whatever this is
-Idle = Class{
+
+local Idle = Class{
 	name = "idle",
 	function(self, a)
 		self.priority = 0
@@ -10,8 +11,10 @@ Idle = Class{
 
 function Idle:update(dt)
 	local a = self.a
-	a.x = a.x + a.joyx
-	a.y = a.y + a.joyy
+	local min, max = math.min, math.max
+	a.x = min(max(a.x + a.joyx, 0), g.getWidth())
+	a.y = min(max(a.y + a.joyy, 0), g.getHeight())
+	
 end
 
 function Idle:draw(c)
@@ -25,13 +28,16 @@ function Idle:draw(c)
 	g.circle('fill', a.x + a.joyx * (a.w - sw), a.y + a.joyy * (a.w - sw), sw)
 end
 
-CD = Class{
+local CD = Class{
 	name = "cooldown",
 	function(self, a, t)
 		assert(a)
 		self.t = t or .5
 		self.priority = 10
 		self.a = a
+		if (self.t == 0) then
+			self = Idle(a)
+		end
 	end	
 }
 
@@ -51,7 +57,7 @@ function CD:draw()
 	Idle.draw(self, self.a.CDcolor)
 end
 
-Firing = Class{
+local Firing = Class{
 	name = "firing",
 	function(self, a, t)
 		assert(a)
@@ -59,10 +65,16 @@ Firing = Class{
 		self.st = .05
 		self.priority = 3
 		self.a = a
+		self.beep = nil
 	end	
 }
 
 function Firing:update(dt)
+	if not self.beep then
+		self.beep = true
+		love.audio.stop(self.a.shoot)
+		love.audio.play(self.a.shoot)
+	end
 	self.t = self.t - dt
 	self.st = self.st - dt
 	if self.st < dt then
@@ -77,7 +89,7 @@ function Firing:update(dt)
 	end
 	
 	if self.t < dt then
-		self.a.move = Idle(self.a)
+		self.a.move = CD(self.a, Consts.fireCD)
 	end
 end
 
@@ -85,7 +97,7 @@ function Firing:draw()
 	Idle.draw(self, self.a.movecolor)
 end
 
-Roll = Class{
+local Roll = Class{
 	name = "roll",
 	function(self, a, t)
 		assert(a)
@@ -105,6 +117,12 @@ function Roll:point2(xx, yy)
 	end
 end
 
+local function atkroll(me, you)
+	assert(me.w, you.w)
+	local w = me.w + you.w
+	return lvec.len2(you.x-me.x,you.y-me.y) < (w * w) 
+end
+	
 function Roll:update(dt)
 	local a = self.a
 	--FIXME: you can walk off the screen, properly TP to a safe spot.
@@ -116,6 +134,11 @@ function Roll:update(dt)
 	if a.y <= self.vy or a.y >= (g.getHeight() - self.vy) then
 		self.vy = -self.vy
 		a.y = a.y + self.vy + self.vy
+	end
+	
+	if atkroll(a, a.other) and not ataked then
+		a.other:hurt(rolldmg)
+		self.ataked = true
 	end
 	
 	a.x = a.x + self.vx

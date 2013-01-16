@@ -1,7 +1,7 @@
 local print = print
 module(..., package.seeall)
-local IN  = require 'input'
-local OUT = require 'output'
+local IN  = require 'console.input'
+local OUT = require 'console.output'
 
 local console = {}
 console.__index = console
@@ -73,6 +73,10 @@ end
 function console:unfocus()
 	love.keypressed = self._keypressed
 	_current_focus = nil
+end
+
+function console:isfocused()
+	return _current_focus ~= nil
 end
 
 function console:keypressed(...)
