@@ -1,6 +1,6 @@
 Gamestate = require "hump.gamestate"
 Class = require "hump.class"
-love.joystick = require('XInputLUA')
+--love.joystick = require('XInputLUA')
 dump = require "dump"
 Vec = require "hump.vector"
 Boolet = require "Boolet"
@@ -125,12 +125,12 @@ end
 
 
 function gam:update(dt)
-	local j = love.joystick
+	--local j = love.joystick
 	
-	j.update() --TODO: make xinput/directinput triggerable
-	you.joyx, you.joyy = deadzone(1, 2, .2)
-	me.joyx, me.joyy = deadzone(3, 4, .2)
-	
+	--j.update() --TODO: make xinput/directinput triggerable
+	--you.joyx, you.joyy = deadzone(1, 2, .2)
+	--me.joyx, me.joyy = deadzone(3, 4, .2)
+
 	you:update(dt)
 	me:update(dt)
 	
