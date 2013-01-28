@@ -2,6 +2,7 @@ local print = print
 module(..., package.seeall)
 local IN  = require 'console.input'
 local OUT = require 'console.output'
+local GS = require 'humo.gamestate'
 
 local console = {}
 console.__index = console

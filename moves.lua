@@ -77,13 +77,14 @@ function Firing:update(dt)
 	end
 	self.t = self.t - dt
 	self.st = self.st - dt
+	local me = self.a
+	local you = self.a.other
 	if self.st < dt then
-		local b = Boolet(self.a)
-		--TODO: proper targeting
-		if me == self.a then
+		if me.ammo > Consts.bulletcost then
+			me.ammo = me.ammo - Consts.bulletcost
+			local b = Boolet(self.a)
+			--TODO: proper targeting
 			b:point(you.x - me.x, you.y - me.y)
-		else
-			b:point(me.x - you.x, me.y - you.y)
 		end
 		self.st = .05
 	end
@@ -137,7 +138,7 @@ function Roll:update(dt)
 	end
 	
 	if atkroll(a, a.other) and not ataked then
-		a.other:hurt(rolldmg)
+		a:hurt(rolldmg)
 		self.ataked = true
 	end
 	

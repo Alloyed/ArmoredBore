@@ -2,6 +2,8 @@
 return {
 	bulletspeed = 15,
 	bulletdmg = 1,
+	bulletcost = 30,
+	maxammo = 180,
 	rolldmg = 15,
 	fireCD = .01,
 	dashspeed = 15,

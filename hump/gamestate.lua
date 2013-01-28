@@ -59,6 +59,10 @@ function GS.switch(to, ...)
 	return current:enter(pre, ...)
 end
 
+function GS.current()
+	return current
+end
+
 -- holds all defined love callbacks after GS.registerEvents is called
 -- returns empty function on undefined callback
 local registry = setmetatable({}, {__index = function() return __NULL__ end})

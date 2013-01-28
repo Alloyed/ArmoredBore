@@ -19,32 +19,62 @@ g = love.graphics
 Dude = require "player"
 local fnt = nil
 
+function help()
+	print("This viddy game takes two dueds and one xbax controller")
+	print("Dude 1 uses the left stick and trigger")
+	print("Dude 2 uses the right stick and trigger")
+	print("use the bumper to dash in the direction the stick is pointing")
+	print("use the trigger to fire bullet from the gun'sbraster")
+end
+
 function makegooey(x)
 	x = x or 0
 	return function(self)
 		g.setColor(self.idlecolor)
 		g.rectangle('fill', x, 0, 30, self.hp*30)
+		
 		g.setColor(0,255,10)
 		g.rectangle('line', x, 0, 30, Consts.health*30)
+		
+		if self.ammo > Consts.bulletcost*3 then
+			g.setColor(0, 200, 10)
+		else
+			g.setColor(200, 0, 10)
+		end
+		g.rectangle('fill', x, 30 + Consts.health*30, 30, 30)
+		
+		g.setColor(255, 255, 255)
 		g.setFont(fnt)
-		g.print(self.wins, x, g.getHeight()-20)
+		g.print(string.format("W%d", self.wins), x, 90 + Consts.health*30)
 	end
 end
 
+gam = Gamestate.new()
 
 function love.load()
 	love.keyboard.setKeyRepeat(.150, .050)
-	g.setBackgroundColor(0x33,0x54,0x10)
-
+	
 	fnt = love.graphics.newFont('VeraMono.ttf', 20)
 	console = Console.new(fnt)
 	print("welcom to viddy gam be sure to play")
 	startsound = love.audio.newSource("stort.wav")
 	meshoot = love.audio.newSource("meshoot.wav", "static")
 	youshoot = love.audio.newSource("youshoot.wav" , "static")
-	justlikemakegame()
+	hert = love.audio.newSource("beep.wav", "static")
+	
+	local all_callbacks = {
+	'update', 'draw', 'focus', 'keypressed', 'keyreleased',
+	'mousepressed', 'mousereleased'
+	}
+
+	Gamestate.switch(gam)
+	Gamestate.registerEvents(all_callbacks)
 end
 
+function gam:enter()
+	g.setBackgroundColor(0x33,0x54,0x10)
+	justlikemakegame()
+end
 
 function justlikemakegame()
 	local ywin, mwin = (you or {wins = 0}).wins, (me or {wins = 0}).wins or 0
@@ -84,7 +114,7 @@ function justlikemakegame()
 end
 
 
-function deadzone(xaxis, yaxis, dz) 
+function deadzone(xaxis, yaxis, dz)
 	local v = Vec(love.joystick.getAxis(1, xaxis), -love.joystick.getAxis(1, yaxis))
 	if v:len() < dz then
 		return 0, 0
@@ -93,7 +123,8 @@ function deadzone(xaxis, yaxis, dz)
 	end
 end
 
-function love.update(dt)
+
+function gam:update(dt)
 	local j = love.joystick
 	
 	j.update() --TODO: make xinput/directinput triggerable
@@ -106,7 +137,8 @@ function love.update(dt)
 	Boolet.updateall(dt, me, you)
 end
 
-function love.draw()
+
+function gam:draw()
 	you:draw()
 	me:draw()
 	Boolet.drawall()
@@ -138,34 +170,14 @@ function shootat(otherdude)
 	end
 end
 
-
 function love.joystickpressed(joy, btn)
 	local fn = joyfn[btn]
 	if fn then
 		fn()
 	end
---	if btn == 5 then --LT
---		local f = moves.fire(you)
---		you:setmove(f)
---	elseif btn == 6 then --RT
---		local f = moves.fire(me)
---		me:setmove(f)
---	elseif btn == 7 then --LB
---		local r = moves.roll(you)
---		r:point2(you.joyx, you.joyy)
---		if r.vx then
---			you:setmove(r)
---		end
---	elseif btn == 8 then --RB
---		local r = moves.roll(me)
---		r:point2(me.joyx, me.joyy)
---		if r.vx then
---			me:setmove(r)
---		end
---	end
 end
 
-function love.keypressed(key)
+function gam.keypressed(key)
 	if key == "escape" then
 		console:focus()
 	end

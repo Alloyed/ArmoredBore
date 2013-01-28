@@ -17,8 +17,15 @@ local Boolet = Class{
 	end
 }
 
+function Boolet.getlen()
+	return .15
+end
+
+function Boolet.getRate()
+	return .05
+end
+
 function Boolet.reset()
-	print("sup")
 	Boolets = {}
 	bnum = 0
 end
