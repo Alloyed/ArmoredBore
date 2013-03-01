@@ -61,8 +61,9 @@ local Firing = Class{
 	name = "firing",
 	function(self, a, t)
 		assert(a)
-		self.t = t or .15
-		self.st = .05
+		local atype = a.ammotype
+		self.t =  atype.rate * atype.number
+		self.st = atype.rate
 		self.priority = 3
 		self.a = a
 		self.beep = nil
@@ -70,23 +71,22 @@ local Firing = Class{
 }
 
 function Firing:update(dt)
-	if not self.beep then
-		self.beep = true
-		love.audio.stop(self.a.shoot)
-		love.audio.play(self.a.shoot)
-	end
+
 	self.t = self.t - dt
 	self.st = self.st - dt
+
 	local me = self.a
 	local you = self.a.other
+	local atype = self.a.ammotype
+
 	if self.st < dt then
-		if me.ammo > Consts.bulletcost then
-			me.ammo = me.ammo - Consts.bulletcost
+		if me.ammo > atype.cost then
+			me.ammo = me.ammo - atype.cost
 			local b = Boolet(self.a)
 			--TODO: proper targeting
 			b:point(you.x - me.x, you.y - me.y)
 		end
-		self.st = .05
+		self.st = atype.rate
 	end
 	
 	if self.t < dt then
@@ -123,23 +123,46 @@ local function atkroll(me, you)
 	local w = me.w + you.w
 	return lvec.len2(you.x-me.x,you.y-me.y) < (w * w) 
 end
+
+local function walls(self)
+	local abs = math.abs
+	local a = self.a
+	if a.x < self.vx then
+		a.x = self.vx
+		self.vx = abs(self.vx)
+	end
 	
+	if a.x >= (g.getWidth() - self.vx) then
+		a.x = (g.getWidth() - self.vx)
+		self.vx = -self.vx
+	end
+	
+	if a.y < self.vy then
+		a.y = self.vy
+		self.vy = abs(self.vy)
+	end
+	
+	if a.y >= (g.getHeight() - self.vy) then
+		a.y = (g.getHeight() - self.vy)
+		self.vy = -self.vy
+	end
+end
+
 function Roll:update(dt)
 	local a = self.a
 	--FIXME: you can walk off the screen, properly TP to a safe spot.
-	if a.x <= self.vx or a.x >= (g.getWidth() - self.vx) then
-		self.vx = -self.vx
-		a.x = a.x + self.vx + self.vx
-	end
+	walls(self)
+	local o = a.other
 	
-	if a.y <= self.vy or a.y >= (g.getHeight() - self.vy) then
-		self.vy = -self.vy
-		a.y = a.y + self.vy + self.vy
-	end
-	
-	if atkroll(a, a.other) and not ataked then
-		a:hurt(rolldmg)
-		self.ataked = true
+	if nil and atkroll(a, o) then --COMMENT
+		local av, ov = Vec(self.vx, self.vy), Vec(o.vx or 0, o.vy or 0)
+		local un = Vec(o.x - a.x, o.y - a.y):normalize_inplace()
+		local ut = un:perpendicular()
+		local avn, avt = av:projectOn(un), av:projectOn(ut)
+		local ovn, ovt = ov:projectOn(un), ov:projectOn(ut)
+		
+		self.vx, self.vy = (ovn+avt):unpack()
+		o.vx, o.vy = (avn+ovt):unpack()
 	end
 	
 	a.x = a.x + self.vx
