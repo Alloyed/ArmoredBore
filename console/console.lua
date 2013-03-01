@@ -65,14 +65,12 @@ local _current_focus
 function console:focus()
 	if _current_focus then
 		_current_focus:unfocus()
+	else	
+		_current_focus = self
 	end
-	self._keypressed = love.keypressed
-	love.keypressed = function(...) self._in:keypressed(...) end
-	_current_focus = self
 end
 
 function console:unfocus()
-	love.keypressed = self._keypressed
 	_current_focus = nil
 end
 
@@ -81,5 +79,7 @@ function console:isfocused()
 end
 
 function console:keypressed(...)
-	self._in:keypressed(...)
+	if _current_focus then
+		self._in:keypressed(...)
+	end
 end

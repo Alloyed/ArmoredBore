@@ -1,5 +1,7 @@
 moves = require "moves"
 Consts = require "balance"
+timer = require "hump.timer"
+Ring = require "hump.ringbuffer"
 
 local Dude = Class{
 	name = "dude",
@@ -12,7 +14,12 @@ local Dude = Class{
 		self.joyy = 0
 		self.hp = Consts.health
 		self.ammo = 0
-		self.ammotype = Boolet
+		self.buf = Ring(34)
+		for k, v in pairs(Boolet.types) do
+			self.buf:insert(v)
+		end
+		self.buf:remove()
+		self.ammotype = self.buf:next()
 		
 		self.move = moves.cooldown(self, Consts.initialcountdown)
 		self.boolets = {}
@@ -39,12 +46,15 @@ end
 
 function Dude:hurt(pain)
 	self.hp = self.hp - (pain or Consts.bulletdmg)
-	love.audio.stop(hert)
-	love.audio.play(hert)
-	if self.hp <= 0 then
-		printf("%s win the viddy gam :D", self.other.name)
+	if self.hp <= 0 and not gamewon then
+		gamewon = true
+		printstr = string.format("%s WINS", self.other.name)
 		self.other.wins = self.other.wins + 1
-		justlikemakegame()
+
+		Timer.add(4, function()
+			printstr = ""
+			justlikemakegame()
+		end)
 	end
 end
 

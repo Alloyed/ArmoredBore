@@ -1,5 +1,5 @@
 function love.conf(t)
-	t.title = "press esc for console, type in help() for help"
+	t.title = "i sort of wish this was a mech game but it isn't"
 
 	t.screen.width = 1024
 	t.screen.height = 896
