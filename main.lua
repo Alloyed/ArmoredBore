@@ -52,6 +52,9 @@ function love.load()
 	fnt = love.graphics.newFont('VeraMono.ttf', 20)
 	hfnt = love.graphics.newFont('VeraMono.ttf', 50)
 	console = Console.new(fnt)
+	
+	star = g.newImage("star.png")
+	
 	print("welcom to " .. Consts.vidya .. " be sure to play")
 	
 	defaultscheme()
@@ -142,7 +145,7 @@ end
 
 function defaultscheme()
 	leftscheme = function(pl) control.schemes.joypad(pl, 'l', 'l', 1) end
-	rightscheme = function(pl) control.schemes.what(pl) end
+	rightscheme = function(pl) control.schemes.joypad(pl, 'r', 'r', 1) end
 	print("default scheme loaded")
 end
 
@@ -217,6 +220,10 @@ local _print = print
 function print(...)
 	_print(...)
 	return console:print(...)
+end
+
+function clear()
+	console:reset()
 end
 
 function printf(fmt, ...)

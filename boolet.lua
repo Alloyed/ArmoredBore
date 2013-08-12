@@ -58,6 +58,19 @@ local Boolet = Class{
 		self.hsh = string.format("b%d", bnum)
 		Boolets[self.hsh] = self
 		self.t = self.btype.decay
+		
+		local p = love.graphics.newParticleSystem(star, 256)
+		
+		p:setEmissionRate (60)
+		p:setLifetime (-1)
+		p:setSizes (.1)
+		p:setParticleLife (.1)
+		local c = self.owner.idlecolor
+		p:setColors(c[1], c[2], c[3], 255)
+		--p:setRadialAcceleration(.1, .5)
+		
+		self.trail = p
+
 	end
 }
 
@@ -87,6 +100,11 @@ function Boolet:point(xx, yy)
 	local s = self.btype.speed
 	self.vx = vx*s
 	self.vy = vy*s
+	self.trail:setDirection(math.atan2(xx,yy))
+	self.trail:setSpeed(s, s+.1)
+	self.trail:setSpread(.01)
+	self.trail:stop()
+	self.trail:start()
 end
 
 function Boolet:update(dt, me, you)
@@ -107,6 +125,9 @@ function Boolet:update(dt, me, you)
 	if self.t < dt then
 		Boolets[self.hsh] = nil
 	end
+	
+	self.trail:update(dt)
+	self.trail:setPosition(self.x, self.y)
 end
 
 function Boolet:isTouching(dude)
@@ -118,6 +139,7 @@ function Boolet:draw()
 	if self.btype.draw then self.btype.draw(self) return end
 	local g = love.graphics
 	local rc = self.owner.idlecolor
+	g.draw(self.trail)
 	g.setColor(rc)
 	g.circle('fill', self.x, self.y, self.btype.size)
 end

@@ -53,6 +53,10 @@ function console:onCommand(cmd)
 	end
 end
 
+function console:reset()
+	self._out:reset()
+end
+
 function console:draw(ox,oy)
 	assert(ox and oy)
 	local inp = table.concat{self._prompt, self._in:current(), " "}

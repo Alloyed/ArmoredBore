@@ -17,12 +17,30 @@ function Idle:update(dt)
 	
 end
 
+function polygon(N)
+	local t = {}
+	local twopi = math.pi * 2
+	for i=1,N do
+		table.insert(t, math.cos(twopi * i / N))
+		table.insert(t, math.sin(twopi * i / N))
+	end
+	return t
+end
+
+
+sides = 6
 function Idle:draw(c)
 	local a = self.a
 	c = c or a.idlecolor
+	local hex = polygon(sides)
 	
 	g.setColor(c)
-	g.circle('fill', a.x, a.y, a.w)
+	g.push()
+	g.translate(a.x, a.y)
+	g.scale(a.w)
+	g.polygon('fill', unpack(hex))
+	--g.circle('fill', a.x, a.y, a.w)
+	g.pop()
 	g.setColor(255, 255, 255, 255) 
 	local sw = a.w / 5
 	g.circle('fill', a.x + a.joyx * (a.w - sw), a.y + a.joyy * (a.w - sw), sw)

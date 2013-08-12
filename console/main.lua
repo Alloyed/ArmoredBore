@@ -46,6 +46,10 @@ function print(...)
 	return console:print(...)
 end
 
+function reset()
+	return console:reset()
+end
+
 function printf(fmt, ...)
 	return print(string.format(fmt, ...))
 end
