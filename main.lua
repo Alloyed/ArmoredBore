@@ -176,10 +176,8 @@ function justlikemakegame()
 	you.shoot     = youshoot
 
 	--RIGH
-	me = Dude()
+	me = Dude(900, 700)
 	me.name      = "BLUE"
-	me.x         = 900
-	me.y         = 700
 	me.idlecolor = {0x05, 0x00, 0xFF}
 	me.movecolor = {0x00, 0x79, 0xFF}
 	me.CDcolor   = {0x40, 0x5E, 0x80}

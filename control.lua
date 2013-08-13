@@ -66,18 +66,13 @@ end
 
 function makeroll(dude)
 	return function()
-		local r = moves.roll(dude)
-		r:point2(dude.joyx, dude.joyy)
-		if r.vx then
-			dude:setmove(r)
-		end
+		dude:pushmove(moves.roll, dude.joyx, dude.joyy)
 	end
 end
 
 function shootat(dude)
 	return function()
-		local f = moves.fire(dude)
-		dude:setmove(f)
+		dude:pushmove(moves.fire)
 	end
 end
 
@@ -87,26 +82,17 @@ function switch(dude)
 	end
 end
 
-function deadzone(jnum, xaxis, yaxis, dz)
-	local v = Vec(lj.getAxis(jnum, xaxis), lj.getAxis(jnum, yaxis))
-	if v:len() < dz then
-		return 0, 0
-	else
-		return v:unpack()
-	end
-end
-
-local joyx, joyy = {}, {}
-local xi, yi = 1, 1
-function joyupdate(player, joynum, axis1, axis2)
+function joyupdate(player, joynum, xaxis, yaxis)
+	local deadzone = .2
 	return function()
-		if not player then
-			return
+		local xm, ym = xaxis > 0 and 1 or -1, yaxis > 0 and 1 or -1
+		local xaxis, yaxis = math.abs(xaxis), math.abs(yaxis)
+		local v = Vec(xm * ljoy.getAxis(joynum, xaxis), ym * lj.getAxis(joynum, yaxis))
+		if v:len2() < deadzone * deadzone then
+			player.joyx, player.joyy = 0, 0
+		else
+			player.joyx, player.joyy = v.x, v.y
 		end
-		player.joyx, player.joyy = deadzone(joynum, axis1, axis2, .2)
-		joyx[xi], joyy[yi] = player.joyx, player.joyy
-		xi = math.mod(xi + 1, 60)
-		yi = math.mod(yi + 1, 60)
 	end
 end
 
@@ -166,28 +152,28 @@ function schemes.joypad(player, joy, buttons, num)
 	end
 
 	if buttons == 'l' then
-		bump, trig = 7, 5
+		bump, trig = 5, 1
 	else
-		bump, trig = 8, 6
+		bump, trig = 6, 2
 	end
-	register( {"joystick", num, trig}, shootat(player))
-	register( {"joystick", num, bump}, makeroll(player))
-	register( {"joystick", num, joy3}, switch(player))
-	register( "update", joyupdate(player, num, joy1, joy2))
+	register({"joystick", num, trig}, shootat(player))
+	register({"joystick", num, bump}, makeroll(player))
+	register({"joystick", num, joy3}, switch(player))
+	register("update", joyupdate(player, num, joy1, joy2))
 end
 
 function schemes.moose(player)
-	register( {"mouse", "l"}, shootat(player))
-	register( {"mouse", "r"}, makeroll(player))
-	register( {"mouse", "m"}, switch(player))
-	register( "update", mouseupdate(player))
+	register({"mouse", "l"}, shootat(player))
+	register({"mouse", "r"}, makeroll(player))
+	register({"mouse", "m"}, switch(player))
+	register("update", mouseupdate(player))
 end
 
 function schemes.numpad(player)
-	register( {"keyboard", "kp0"}, shootat(player))
-	register( {"keyboard", "kp5"}, makeroll(player))
-	register( {"keyboard", "kp+"}, switch(player))
-	register( "update", kbupdate(player))
+	register({"keyboard", "kp0"}, shootat(player))
+	register({"keyboard", "kp5"}, makeroll(player))
+	register({"keyboard", "kp+"}, switch(player))
+	register("update", kbupdate(player))
 end
 
 function schemes.what(player)

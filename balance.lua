@@ -12,7 +12,7 @@ return {
 	rolldmg = 15,
 	fireCD = .01,
 
-	dashradius = 15,
+	dashradius = 200,
 	dashCD = 0, -- unimplemented
 
 	health = 15, -- initial health that is
