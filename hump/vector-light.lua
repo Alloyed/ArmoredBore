@@ -1,5 +1,5 @@
 --[[
-Copyright (c) 2012 Matthias Richter
+Copyright (c) 2012-2013 Matthias Richter
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -109,6 +109,12 @@ local function mirror(x,y, u,v)
 	return s*u - x, s*v - y
 end
 
+-- ref.: http://blog.signalsondisplay.com/?p=336
+local function trim(maxLen, x, y)
+	local s = maxLen * maxLen / len2(x, y)
+	s = s < 1 and 1 or math.sqrt(s)
+	return x * s, y * s
+end
 
 -- the module
 return {
@@ -138,4 +144,5 @@ return {
 	perpendicular = perpendicular,
 	project       = project,
 	mirror        = mirror,
+	trim          = trim
 }

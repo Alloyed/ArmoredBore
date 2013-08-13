@@ -1,7 +1,4 @@
-moves = require "moves"
-Consts = require "balance"
-timer = require "hump.timer"
-Ring = require "hump.ringbuffer"
+local moves = require "moves"
 
 local Dude = Class{
 	name = "dude",
@@ -9,10 +6,10 @@ local Dude = Class{
 		self.x = x or 100
 		self.y = y  or 100
 		self.w = 50
-		
+
 		self.joyx = 0
 		self.joyy = 0
-		self.hp = Consts.health
+		self.hp = balance.health
 		self.ammo = 0
 		self.buf = Ring(34)
 		for k, v in pairs(Boolet.types) do
@@ -20,8 +17,8 @@ local Dude = Class{
 		end
 		self.buf:remove()
 		self.ammotype = self.buf:next()
-		
-		self.move = moves.cooldown(self, Consts.initialcountdown)
+
+		self.move = moves.cooldown(self, balance.initialcountdown)
 		self.boolets = {}
 		self.bnum = 0
 	end
@@ -36,7 +33,7 @@ function Dude:setmove(move)
 end
 
 function Dude:update(dt)
-	self.ammo = math.min(self.ammo + 1, Consts.maxammo)
+	self.ammo = math.min(self.ammo + 1, balance.maxammo)
 	self.move:update(dt)
 end
 
@@ -45,7 +42,7 @@ function Dude:draw()
 end
 
 function Dude:hurt(pain)
-	self.hp = self.hp - (pain or Consts.bulletdmg)
+	self.hp = self.hp - (pain or balance.bulletdmg)
 	if self.hp <= 0 and not gamewon then
 		gamewon = true
 		printstr = string.format("%s WINS", self.other.name)

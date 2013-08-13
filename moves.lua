@@ -1,6 +1,35 @@
---FIXME: properly inherit for movesets instead of whatever this is
+-- shared defs
+SIDES = 6 -- FIXME: balance.lua-ify
 
-local Idle = Class{
+local function polygon(N)
+	local t = {}
+	local twopi = math.pi * 2
+	for i=1,N do
+		table.insert(t, math.cos(twopi * i / N))
+		table.insert(t, math.sin(twopi * i / N))
+	end
+	return t
+end
+
+
+local function polydraw(self, c)
+	local a = self.a
+	c = c or a.idlecolor
+	local hex = polygon(SIDES)
+
+	lg.setColor(c)
+	lg.push()
+	lg.translate(a.x, a.y)
+	lg.scale(a.w)
+	lg.polygon('fill', unpack(hex))
+	--g.circle('fill', a.x, a.y, a.w)
+	lg.pop()
+	lg.setColor(255, 255, 255, 255)
+	local sw = a.w / 5
+	lg.circle('fill', a.x + a.joyx * (a.w - sw), a.y + a.joyy * (a.w - sw), sw)
+end
+
+local Idle = Class {
 	name = "idle",
 	function(self, a)
 		self.priority = 0
@@ -12,39 +41,15 @@ local Idle = Class{
 function Idle:update(dt)
 	local a = self.a
 	local min, max = math.min, math.max
-	a.x = min(max(a.x + a.joyx, 0), g.getWidth())
-	a.y = min(max(a.y + a.joyy, 0), g.getHeight())
-	
+	a.x = min(max(a.x + a.joyx, 0), lg.getWidth())
+	a.y = min(max(a.y + a.joyy, 0), lg.getHeight())
 end
 
-function polygon(N)
-	local t = {}
-	local twopi = math.pi * 2
-	for i=1,N do
-		table.insert(t, math.cos(twopi * i / N))
-		table.insert(t, math.sin(twopi * i / N))
-	end
-	return t
+function Idle:draw()
+	polydraw(self)
 end
-
 
 sides = 6
-function Idle:draw(c)
-	local a = self.a
-	c = c or a.idlecolor
-	local hex = polygon(sides)
-	
-	g.setColor(c)
-	g.push()
-	g.translate(a.x, a.y)
-	g.scale(a.w)
-	g.polygon('fill', unpack(hex))
-	--g.circle('fill', a.x, a.y, a.w)
-	g.pop()
-	g.setColor(255, 255, 255, 255) 
-	local sw = a.w / 5
-	g.circle('fill', a.x + a.joyx * (a.w - sw), a.y + a.joyy * (a.w - sw), sw)
-end
 
 local CD = Class{
 	name = "cooldown",
@@ -56,7 +61,7 @@ local CD = Class{
 		if (self.t == 0) then
 			self = Idle(a)
 		end
-	end	
+	end
 }
 
 function CD:update(dt)
@@ -72,10 +77,10 @@ function CD:update(dt)
 end
 
 function CD:draw()
-	Idle.draw(self, self.a.CDcolor)
+	polydraw(self, self.a.CDcolor)
 end
 
-local Firing = Class{
+local Firing = Class {
 	name = "firing",
 	function(self, a, t)
 		assert(a)
@@ -85,7 +90,7 @@ local Firing = Class{
 		self.priority = 3
 		self.a = a
 		self.beep = nil
-	end	
+	end
 }
 
 function Firing:update(dt)
@@ -106,14 +111,14 @@ function Firing:update(dt)
 		end
 		self.st = atype.rate
 	end
-	
+
 	if self.t < dt then
-		self.a.move = CD(self.a, Consts.fireCD)
+		self.a.move = CD(self.a, balance.fireCD)
 	end
 end
 
 function Firing:draw()
-	Idle.draw(self, self.a.movecolor)
+	polydraw(self, self.a.movecolor)
 end
 
 local Roll = Class{
@@ -123,7 +128,7 @@ local Roll = Class{
 		self.t = t or .4
 		self.priority = 5
 		self.a = a
-	end	
+	end
 }
 
 function Roll:point2(xx, yy)
@@ -131,15 +136,15 @@ function Roll:point2(xx, yy)
 		local v = Vec(xx, yy)
 		v:normalize_inplace()
 		local vx, vy = v:unpack()
-		self.vx = Consts.dashspeed * vx
-		self.vy = Consts.dashspeed * vy
+		self.vx = balance.dashspeed * vx
+		self.vy = balance.dashspeed * vy
 	end
 end
 
 local function atkroll(me, you)
 	assert(me.w, you.w)
 	local w = me.w + you.w
-	return lvec.len2(you.x-me.x,you.y-me.y) < (w * w) 
+	return lvec.len2(you.x-me.x,you.y-me.y) < (w * w)
 end
 
 local function walls(self)
@@ -149,19 +154,19 @@ local function walls(self)
 		a.x = self.vx
 		self.vx = abs(self.vx)
 	end
-	
-	if a.x >= (g.getWidth() - self.vx) then
-		a.x = (g.getWidth() - self.vx)
+
+	if a.x >= (lg.getWidth() - self.vx) then
+		a.x = (lg.getWidth() - self.vx)
 		self.vx = -self.vx
 	end
-	
+
 	if a.y < self.vy then
 		a.y = self.vy
 		self.vy = abs(self.vy)
 	end
-	
-	if a.y >= (g.getHeight() - self.vy) then
-		a.y = (g.getHeight() - self.vy)
+
+	if a.y >= (lg.getHeight() - self.vy) then
+		a.y = (lg.getHeight() - self.vy)
 		self.vy = -self.vy
 	end
 end
@@ -171,31 +176,33 @@ function Roll:update(dt)
 	--FIXME: you can walk off the screen, properly TP to a safe spot.
 	walls(self)
 	local o = a.other
-	
-	if nil and atkroll(a, o) then --COMMENT
+	--[=[
+	-- Not exactly sure why this is commented out, TODO
+	-- I _think_ this might be related to bounceback
+	if nil and atkroll(a, o) then 
 		local av, ov = Vec(self.vx, self.vy), Vec(o.vx or 0, o.vy or 0)
 		local un = Vec(o.x - a.x, o.y - a.y):normalize_inplace()
 		local ut = un:perpendicular()
 		local avn, avt = av:projectOn(un), av:projectOn(ut)
 		local ovn, ovt = ov:projectOn(un), ov:projectOn(ut)
-		
+
 		self.vx, self.vy = (ovn+avt):unpack()
 		o.vx, o.vy = (avn+ovt):unpack()
 	end
-	
+	--]=]
 	a.x = a.x + self.vx
 	a.y = a.y + self.vy
 	--self.vx = self.vx * .98
 	--self.vy = self.vy * .95
 	self.t = self.t - dt
-	
+
 	if self.t < dt then
 		a:setmove(CD(self.a, .3))
 	end
 end
 
 function Roll:draw()
-	Idle.draw(self, self.a.movecolor)
+	polydraw(self, self.a.movecolor)
 end
 
 return { idle = Idle, roll = Roll, cooldown = CD, fire = Firing }

@@ -1,5 +1,5 @@
 --[[
-Copyright (c) 2010-2012 Matthias Richter
+Copyright (c) 2010-2013 Matthias Richter
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -158,7 +158,19 @@ function vector:cross(v)
 	return self.x * v.y - self.y * v.x
 end
 
+-- ref.: http://blog.signalsondisplay.com/?p=336
+function vector:trim_inplace(maxLen)
+	local s = maxLen * maxLen / self:len2()
+	s = s < 1 and 1 or math.sqrt(s)
+	self.x, self.y = self.x * s, self.y * s
+	return self
+end
+
+function vector:trimmed(maxLen)
+	return self:clone():trim_inplace(maxLen)
+end
+
 
 -- the module
 return setmetatable({new = new, isvector = isvector},
-	{__call = function(_, ...) return new(...) end})
+{__call = function(_, ...) return new(...) end})
