@@ -1,4 +1,5 @@
 local moves = require "moves"
+local Ring  = require "hump.ringbuffer"
 
 local Dude = Class{
 	name = "dude",

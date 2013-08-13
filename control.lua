@@ -88,7 +88,7 @@ function switch(dude)
 end
 
 function deadzone(jnum, xaxis, yaxis, dz)
-	local v = Vec(lj.getAxis(jnum, xaxis), -lj.getAxis(jnum, yaxis))
+	local v = Vec(lj.getAxis(jnum, xaxis), lj.getAxis(jnum, yaxis))
 	if v:len() < dz then
 		return 0, 0
 	else
@@ -103,11 +103,10 @@ function joyupdate(player, joynum, axis1, axis2)
 		if not player then
 			return
 		end
-
 		player.joyx, player.joyy = deadzone(joynum, axis1, axis2, .2)
-	joyx[xi], joyy[yi] = player.joyx, player.joyy
-	xi = math.mod(xi + 1, 60)
-	yi = math.mod(yi + 1, 60)
+		joyx[xi], joyy[yi] = player.joyx, player.joyy
+		xi = math.mod(xi + 1, 60)
+		yi = math.mod(yi + 1, 60)
 	end
 end
 
@@ -163,7 +162,7 @@ function schemes.joypad(player, joy, buttons, num)
 	if joy == 'l' then
 		joy1, joy2, joy3 = 1, 2, 11
 	else
-		joy1, joy2, joy3 = 3, 4, 12
+		joy1, joy2, joy3 = 4, 5, 12
 	end
 
 	if buttons == 'l' then
@@ -171,10 +170,10 @@ function schemes.joypad(player, joy, buttons, num)
 	else
 		bump, trig = 8, 6
 	end
-	register( {"joystick", num, trig}, shootat(player)) 
-	register( {"joystick", num, bump}, makeroll(player)) 
+	register( {"joystick", num, trig}, shootat(player))
+	register( {"joystick", num, bump}, makeroll(player))
 	register( {"joystick", num, joy3}, switch(player))
-	register( "update", joyupdate(player, num, joy1, joy2)) 
+	register( "update", joyupdate(player, num, joy1, joy2))
 end
 
 function schemes.moose(player)

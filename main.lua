@@ -64,14 +64,7 @@ function love.load()
 	Gamestate.switch(menu)
 end
 
-schemes = {
-	function()
-		return control.schemes.moose, "Mouse"
-	end,
-	function()
-		return control.schemes.moose, "Keyboard"
-	end,
-}
+schemes = {}
 
 for i=1, ljoy.getNumJoysticks() do
 	table.insert(schemes, function()
@@ -91,6 +84,15 @@ for i=1, ljoy.getNumJoysticks() do
 	end)
 end
 
+table.insert(schemes, function()
+	return control.schemes.moose, "Mouse (lel)"
+end)
+
+table.insert(schemes, function()
+	return control.schemes.numpad, "Keyboard (fag)"
+end)
+
+
 local mindex = 1
 local mtext  = {"Start game", "whoops", "whoops", "Options", "Quit"}
 local mfn    = { function() start() end,
@@ -100,7 +102,7 @@ local mfn    = { function() start() end,
                  function() love.event.push('quit') end }
 
 -- {{{ Menu
-local Aind, Bind = 1, 3
+local Aind, Bind = 0, 1
 function selectA()
 	Aind = (Aind % #schemes) + 1
 	local tmp, n = schemes[Aind]()
@@ -232,6 +234,7 @@ end
 
 --XInputlua only overrides the love function
 function love.joystickpressed(joy, btn)
+	print(joy, btn)
 	control.joystickdo(joy, btn, false)
 end
 
