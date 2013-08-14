@@ -137,7 +137,7 @@ end
 function Boolet:draw()
 	if self.btype.draw then self.btype.draw(self) return end
 	local rc = self.owner.idlecolor
-	lg.draw(self.trail)
+	--lg.draw(self.trail)
 	lg.setColor(rc)
 	lg.circle('fill', self.x, self.y, self.btype.size)
 end

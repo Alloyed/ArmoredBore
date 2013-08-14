@@ -30,6 +30,7 @@ local Dude = Class{
 function Dude:setmove(newmove, ...)
 	if self.move and self.move.dispose then self.move:dispose() end
 	self.move = newmove(self, ...)
+
 	return self.move
 end
 

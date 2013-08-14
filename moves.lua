@@ -151,10 +151,10 @@ function Roll:init(a, joyx, joyy)
 	assert(a)
 	self.t = t or .4
 	self.a = a
-	if joyx == 0 and joyy == 0 then return CD(a, 100) end
+	if joyx == 0 and joyy == 0 then self.ded = true return end
 	local d = Vec(joyx, joyy):normalized() * balance.dashradius
-	self.getX = tween.tween_for(self.t,  tween.range(a.x, a.x + d.x), tween.pow(100))
-	self.getY = tween.tween_for(self.t, tween.range(a.y, a.y + d.y), tween.pow(100))
+	self.getX = tween.tween_for(self.t, tween.range(a.x, a.x + d.x))
+	self.getY = tween.tween_for(self.t, tween.range(a.y, a.y + d.y))
 end
 
 local function atkroll(me, you)
@@ -189,6 +189,7 @@ end
 
 function Roll:update(dt)
 	local a = self.a
+	if self.ded then a:popmove() return end
 	--FIXME: you can walk off the screen, properly TP to a safe spot.
 	-- walls(self)
 	local o = a.other

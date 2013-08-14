@@ -19,7 +19,7 @@ local leftscheme = nil
 local rightscheme = nil
 
 gamewon = false
--- PLEASE STOP LOOKING THIS IS BAD
+--- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
 
 function makegooey(x)
@@ -107,7 +107,6 @@ function selectA()
 	Aind = (Aind % #schemes) + 1
 	local tmp, n = schemes[Aind]()
 	leftscheme = tmp
-	print(leftscheme)
 	mtext[2] = "Player1 : " .. n
 end
 
@@ -124,7 +123,53 @@ function menu:enter()
 	selectB()
 end
 
+do
+-- FIXME: imperative ugliness
+local t = .25
+local function add(dt)
+	t = t + dt
+end
+
+local function up()
+		-- TODO: you might notice this is dumb
+		mindex = (mindex - 2 % #mtext) + 1
+		mindex = (mindex - 2 % #mtext) + 1
+		mindex = (mindex % #mtext) + 1
+end
+
+local function down()
+		mindex = (mindex % #mtext) + 1
+end
+
 function menu:update(dt)
+	local hat = ljoy.getHat(1, 1)
+	if (string.match(hat, 'd')) then
+		add(dt)
+		if t > .25 then
+			t = t - .25
+			down()
+		end
+	elseif (string.match(hat, 'u')) then
+		add(dt)
+		if t > .25 then
+			t = t - .25
+			up()
+		end
+	else
+		t = .25
+	end
+end
+
+function menu:keypressed(key, uni)
+	if key == 'down' then
+		down()
+	elseif key == 'up' then
+		up()
+	elseif key == 'return' then
+		mfn[mindex]()
+	end
+end
+
 end
 
 function menu:draw()
@@ -132,19 +177,7 @@ function menu:draw()
 		lg.print(text, 10, 100 + i * 20)
 	end
 	lg.print("A", 1, 100 + mindex * 20)
-end
-
-function menu:keypressed(key, uni)
-	if key == 'down' then
-		mindex = (mindex % #mtext) + 1
-	elseif key == 'up' then
-		-- TODO: you might notice this is dumb
-		mindex = (mindex - 2 % #mtext) + 1
-		mindex = (mindex - 2 % #mtext) + 1
-		mindex = (mindex % #mtext) + 1
-	elseif key == 'return' then
-		mfn[mindex]()
-	end
+	lg.print(ljoy.getHat(1, 1), 500, 500)
 end
 -- }}}
 
@@ -156,8 +189,6 @@ function game:enter()
 	lg.setBackgroundColor(0x33,0x54,0x10)
 	justlikemakegame()
 end
-
-
 
 function justlikemakegame()
 	local ywin, mwin = (you or {wins = 0}).wins, (me or {wins = 0}).wins
@@ -232,7 +263,7 @@ end
 
 --XInputlua only overrides the love function
 function love.joystickpressed(joy, btn)
-	print(joy, btn)
+	-- print(joy, btn)
 	control.joystickdo(joy, btn, false)
 end
 
