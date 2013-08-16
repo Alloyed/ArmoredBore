@@ -2,7 +2,7 @@ module(..., package.seeall)
 
 --TODO: rewrite love.run to include this stuff
 -- XInput = require('XInputLUA') --TODO: selectively disable
-local lj = love.joystick
+local joypad = require 'joypad'
 
 local functions = {}
 local updatefn = {}
@@ -98,7 +98,8 @@ end
 
 function mouseupdate(player)
 	return function()
-		local v = Vec(.01 * (love.mouse.getX()-player.x), .01 * (love.mouse.getY()-player.y))
+		local x, y = camera:mousepos()
+		local v = Vec((x-player.x) / balance.dashradius ,(y-player.y) / balance.dashradius )
 		if v:len() > 1 then
 			v:normalize_inplace()
 		end
@@ -106,25 +107,16 @@ function mouseupdate(player)
 	end
 end
 
-local xxi, yyi = 30, 30
-function randomdate(player)
-	return function()
-		player.joyx, player.joyy = joyx[xxi] or 0, joyy[yyi] or 0
-		xxi = math.mod(xi + 1, 60)
-		yyi = math.mod(yi + 1, 60)
-	end
-end
-
 local ks = {
-	Vec(-1, 1),
-	Vec(0, 1),
-	Vec(1, 1),
-	Vec(-1, 0),
-	Vec(0, 0),
-	Vec(1, 0),
+	Vec(-1,  1),
+	Vec( 0,  1),
+	Vec( 1,  1),
+	Vec(-1,  0),
+	Vec( 0,  0),
+	Vec( 1,  0),
 	Vec(-1, -1),
-	Vec(0, -1),
-	Vec(1, -1)
+	Vec( 0, -1),
+	Vec( 1, -1)
 }
 
 function kbupdate(player)
@@ -137,6 +129,23 @@ function kbupdate(player)
 			end
 		end
 		v:normalize_inplace()
+		player.joyx, player.joyy = v:unpack()
+	end
+end
+
+function robot(player)
+	local roll  = makeroll(player)
+	local shoot = shootat(player)
+	Timer.addPeriodic(1.3, shoot)
+	local cdown = false
+	return function()
+		local o = player.other
+		local v = Vec(-o.joyx, -o.joyy)
+		if (not cdown and o.move.name == "firing") then
+			roll()
+			cdown = true
+			Timer.add(2, function() cdown = false end)
+		end
 		player.joyx, player.joyy = v:unpack()
 	end
 end
@@ -177,7 +186,7 @@ function schemes.numpad(player)
 end
 
 function schemes.what(player)
-	register("update", randomdate(player))
+	register("update", robot(player))
 end
 
 

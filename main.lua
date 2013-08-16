@@ -12,6 +12,8 @@ Dude    = require "player"
 you = nil
 me  = nil
 
+camera = nil
+
 local fnt = nil
 local hfnt = nil
 
@@ -22,33 +24,41 @@ gamewon = false
 --- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
 
-function makegooey(x)
-	x = x or 0
-	return function(self)
-		local maxhp = balance.health
-		lg.setColor(self.idlecolor)
-		lg.rectangle('fill', x, 0, 30, self.hp*30)
+function gooey(self, bx, ex)
+	local dw = bx > ex and -1 or 1
+	-- HP bar
+	local size = 30
+	local hpbar_h = balance.health * size
+	local hpbar_w = size
+	local hpleft = (self.hp / balance.health) * hpbar_h
 
-		lg.setColor(0,255,10)
-		lg.rectangle('line', x, 0, 30, maxhp*30)
-		if self.ammo > self.ammotype.cost * self.ammotype.number then
-			lg.setColor(0, 200, 10)
-		else
-			lg.setColor(200, 0, 10)
-		end
-		lg.rectangle('fill', x, 30 + maxhp*30, 30, 30)
+	lg.setColor(self.idlecolor)
+	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
 
-		lg.setColor(255, 255, 255)
-		lg.setFont(fnt)
-		lg.print(string.format("W%d", self.wins), x, 90 + maxhp*30)
-		lg.print(string.format("A%s", string.char(string.byte(self.ammotype.name))), x, 120 + maxhp*30)
+	lg.rectangle('fill', hpbar_w, hpbar_h, hpbar_w * .5, me.ammo * -30 / me.ammotype.cost)
+
+	lg.setColor(0,255,10)
+	lg.rectangle('line', bx, 0, hpbar_w * dw, hpbar_h)
+
+	if me.ammo > me.ammotype.cost * me.ammotype.number then
+		lg.setColor(0, 200, 10)
+	else
+		lg.setColor(200, 0, 10)
 	end
+	lg.rectangle('fill', bx, 30 + hpbar_h, 30, 30)
+
+	lg.setColor(255, 255, 255)
+	lg.setFont(fnt)
+	-- lg.print(me.wins .. "", ex, 0)
+	-- lg.print(string.format("A%s", string.char(string.byte(me.ammotype.name))), x, 120 + hpbar_h)
 end
 
 local menu = {}
 local game = {}
 
 function love.load()
+	camera = Camera()
+
 	love.keyboard.setKeyRepeat(.150, .050)
 
 	fnt = lg.newFont('VeraMono.ttf', 20)
@@ -89,9 +99,12 @@ table.insert(schemes, function()
 end)
 
 table.insert(schemes, function()
-	return control.schemes.numpad, "Keyboard (fag)"
+	return control.schemes.what, "AI"
 end)
 
+table.insert(schemes, function()
+	return control.schemes.numpad, "Keyboard (fag)"
+end)
 
 local mindex = 1
 local mtext  = {"Start game", "whoops", "whoops", "Options", "Quit"}
@@ -202,7 +215,6 @@ function justlikemakegame()
 	you.idlecolor = {0xFF,0x9A,0x00}
 	you.movecolor = {0xFF, 0xC0,0x00}
 	you.CDcolor   = {0x80, 0x66, 0x40}
-	you.gooey     = makegooey(0)
 	you.wins      = ywin
 	you.shoot     = youshoot
 
@@ -212,7 +224,6 @@ function justlikemakegame()
 	me.idlecolor = {0x05, 0x00, 0xFF}
 	me.movecolor = {0x00, 0x79, 0xFF}
 	me.CDcolor   = {0x40, 0x5E, 0x80}
-	me.gooey     = makegooey(lg.getWidth()-30, -1)
 	me.wins      = mwin
 	me.shoot     = meshoot
 
@@ -242,23 +253,35 @@ function game:update(dt)
 	me:update(dt)
 
 	Boolet.updateall(dt, me, you)
+
+	local x = .5 * (me.x + you.x)
+	local y = .5 * (me.y + you.y)
+	camera:lookAt(x, y)
+
+	local pad = 250
+	local zx  = lg.getWidth()  / (me.x + pad - you.x)
+	local zy  = lg.getHeight() / (me.y + pad - you.y)
+	camera:zoomTo(math.min(zx, zy))
 end
 
 printstr = ""
 function game:draw()
+	camera:attach()
 	Boolet.drawall()
 	you:draw()
 	me:draw()
+	camera:detach()
 
-	you:gooey()
-	me:gooey()
+	local hw = lg.getWidth() * .5
+	gooey(you, 0, hw)
+	gooey(me, hw * 2, hw)
 	lg.setColor(255,255,255)
 
 	lg.setFont(fnt)
 	lg.print("FPS: "..tostring(love.timer.getFPS( )), 40, 10)
 
 	lg.setFont(hfnt)
-	lg.printf(printstr, 25,lg.getHeight() / 2,lg.getWidth() - 50, 'center')
+	lg.printf(printstr, 25, lg.getHeight() / 2,lg.getWidth() - 50, 'center')
 end
 
 --XInputlua only overrides the love function

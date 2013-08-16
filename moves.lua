@@ -62,8 +62,11 @@ local Idle = Class {
 function Idle:update(dt)
 	local a = self.a
 	local min, max = math.min, math.max
-	a.x = min(max(a.x + a.joyx, 0), lg.getWidth())
-	a.y = min(max(a.y + a.joyy, 0), lg.getHeight())
+	-- FIXME: proper wall clamping
+	-- a.x = min(max(a.x + a.joyx, 0), lg.getWidth())
+	-- a.y = min(max(a.y + a.joyy, 0), lg.getHeight())
+	a.x = a.x + a.joyx
+	a.y = a.y + a.joyy
 	a.cx = a.x
 	a.cy = a.y
 end
