@@ -10,8 +10,8 @@ control = require "control"
 Dude    = require "player"
 colors  = require "colors"
 
-you = nil
-me  = nil
+local you = nil
+local me  = nil
 
 camera = nil
 
@@ -225,7 +225,6 @@ function start()
 end
 
 function game:enter()
-	lg.setBackgroundColor(colors.bg)
 	justlikemakegame()
 end
 
@@ -233,6 +232,8 @@ function justlikemakegame()
 	local ywin, mwin = (you or {wins = 0}).wins, (me or {wins = 0}).wins
 	Boolet.reset()
 	control.reset()
+	Timer.clear()
+	Timer.addPeriodic(.5, function() colors = lfs.load("colors.lua")() end)
 	gamewon = false
 
 	--LEF
@@ -298,6 +299,7 @@ end
 
 printstr = ""
 function game:draw()
+	lg.setBackgroundColor(colors.bg)
 	camera:attach()
 	Boolet.drawall()
 	you:draw()

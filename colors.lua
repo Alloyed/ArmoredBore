@@ -27,7 +27,11 @@ return {
 		cooldown = {web(0x806640)}
 	},
 
-	bg = {web(0x335410)},
+	bg = {web(
+		0x335410
+		-- 0x000000
+		-- 0x123456
+		)},
 	ui = {0, 255, 10},
-	fg = {web(0xFFFFFF)} -- FIXME: used in loads of unspecified places
+	fg = {web(0xFFFFFF)}
 }
