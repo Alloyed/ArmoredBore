@@ -47,6 +47,7 @@ function shapedraw(self, shape, color)
 
 	lg.setColor(a.idlecolor)
 	if a.cx then
+		lg.setLineWidth(5)
 		lg.circle('line', a.cx, a.cy, balance.dashradius)
 	end
 end
@@ -156,8 +157,8 @@ function Roll:init(a, joyx, joyy)
 	self.a = a
 	if joyx == 0 and joyy == 0 then self.ded = true return end
 	local d = Vec(joyx, joyy):normalized() * balance.dashradius
-	self.getX = tween.tween_for(self.t, tween.range(a.x, a.x + d.x))
-	self.getY = tween.tween_for(self.t, tween.range(a.y, a.y + d.y))
+	self.getX = tween.tween_for(self.t, tween.exp(), tween.range(a.x, a.x + d.x))
+	self.getY = tween.tween_for(self.t, tween.exp(), tween.range(a.y, a.y + d.y))
 end
 
 local function atkroll(me, you)

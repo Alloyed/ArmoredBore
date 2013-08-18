@@ -19,20 +19,20 @@ end
 local types = {
 	default = {
 		name = "rapidfire",
-		speed = Consts.bulletspeed,
-		cost = Consts.bulletcost,
-		dmg = Consts.bulletdmg,
+		speed = Consts.bullet.speed,
+		cost = Consts.bullet.cost,
+		dmg = Consts.bullet.dmg,
 		size = 5,
 		decay = 2,
-		rate = Consts.bulletrate,
+		rate = Consts.bullet.rate,
 		number = 3
 	},
 
 	bomb = {
 		name = "bomb",
 		number = 1,
-		cost = Consts.bulletcost * 3,
-		dmg = Consts.bulletdmg * 3,
+		cost = Consts.bullet.cost * 3,
+		dmg = Consts.bullet.dmg * 3,
 		size = 100,
 		speed = 0,
 		decay = 10,

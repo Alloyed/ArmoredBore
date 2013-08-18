@@ -1,12 +1,18 @@
 -- Put any constants that might need to be tweaked here
 return {
-	bulletspeed = 15,
-	bulletdmg = 1,
-	bulletcost = 30,
-	bulletrate = .05,
+	margin = 210,
 
-	bombdmg = 1,
-	bombcost = 10,
+	bullet = {
+		speed = 15,
+		dmg = 1,
+		cost = 30,
+		rate = .05
+	},
+
+	bomb = {
+		dmg = 1,
+		bombcost = 10
+	},
 
 	maxammo = 180,
 	rolldmg = 15,

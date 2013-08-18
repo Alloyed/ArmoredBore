@@ -8,11 +8,14 @@ balance  = require "balance"
 moves   = require "moves"
 control = require "control"
 Dude    = require "player"
+colors  = require "colors"
 
 you = nil
 me  = nil
 
 camera = nil
+
+timeleft = 0 
 
 local fnt = nil
 local hfnt = nil
@@ -32,23 +35,27 @@ function gooey(self, bx, ex)
 	local hpbar_w = size
 	local hpleft = (self.hp / balance.health) * hpbar_h
 
+	lg.setLineWidth(1)
+	lg.setColor(colors.fg)
+	local y = 0
+	while y < hpbar_h do
+		lg.line(bx, y, bx + (hpbar_w*dw), y)
+		y = y + hpbar_w
+	end
+
 	lg.setColor(self.idlecolor)
 	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
-
-	lg.rectangle('fill', hpbar_w, hpbar_h, hpbar_w * .5, me.ammo * -30 / me.ammotype.cost)
-
-	lg.setColor(0,255,10)
-	lg.rectangle('line', bx, 0, hpbar_w * dw, hpbar_h)
-
 	if me.ammo > me.ammotype.cost * me.ammotype.number then
-		lg.setColor(0, 200, 10)
-	else
-		lg.setColor(200, 0, 10)
+		lg.setColor(colors.ui)
 	end
-	lg.rectangle('fill', bx, 30 + hpbar_h, 30, 30)
+	lg.rectangle('fill', bx + (hpbar_w * dw), hpbar_h, 
+	                     hpbar_w * .5 * dw, self.ammo * -30 / self.ammotype.cost)
+	
+	lg.setLineWidth(3)
+	lg.setColor(self.CDcolor)
+	lg.rectangle('line', bx, 0, hpbar_w * dw, hpbar_h)
+	
 
-	lg.setColor(255, 255, 255)
-	lg.setFont(fnt)
 	-- lg.print(me.wins .. "", ex, 0)
 	-- lg.print(string.format("A%s", string.char(string.byte(me.ammotype.name))), x, 120 + hpbar_h)
 end
@@ -186,11 +193,30 @@ end
 end
 
 function menu:draw()
+	lg.setColor(255, 255, 255)
 	for i, text in ipairs(mtext) do
 		lg.print(text, 10, 100 + i * 20)
 	end
 	lg.print("A", 1, 100 + mindex * 20)
-	lg.print(ljoy.getHat(1, 1), 500, 500)
+	lg.print(">byzanz", 450, 400)
+	local y = 0
+	for _, c in pairs(colors.me) do
+		lg.setColor(c)
+		lg.rectangle('fill', 400, 400 + y, 10, 10)
+		y = y + 10	
+	end
+
+	for _, c in pairs(colors.you) do
+		lg.setColor(c)
+		lg.rectangle('fill', 400, 400 + y, 10, 10)
+		y = y + 10	
+	end
+	
+	lg.setColor(colors.ui)
+	lg.rectangle('fill', 400, 400 + y, 10, 10)
+	y = y + 10	
+	lg.setColor(colors.bg)
+	lg.rectangle('fill', 400, 400 + y, 10, 10)
 end
 -- }}}
 
@@ -199,7 +225,7 @@ function start()
 end
 
 function game:enter()
-	lg.setBackgroundColor(0x33,0x54,0x10)
+	lg.setBackgroundColor(colors.bg)
 	justlikemakegame()
 end
 
@@ -212,18 +238,18 @@ function justlikemakegame()
 	--LEF
 	you = Dude()
 	you.name      = "YELLOW"
-	you.idlecolor = {0xFF,0x9A,0x00}
-	you.movecolor = {0xFF, 0xC0,0x00}
-	you.CDcolor   = {0x80, 0x66, 0x40}
+	you.idlecolor = colors.you.idle
+	you.movecolor = colors.you.move
+	you.CDcolor   = colors.you.cooldown
 	you.wins      = ywin
 	you.shoot     = youshoot
 
 	--RIGH
 	me = Dude(900, 700)
 	me.name      = "BLUE"
-	me.idlecolor = {0x05, 0x00, 0xFF}
-	me.movecolor = {0x00, 0x79, 0xFF}
-	me.CDcolor   = {0x40, 0x5E, 0x80}
+	me.idlecolor = colors.me.idle
+	me.movecolor = colors.me.move
+	me.CDcolor   = colors.me.cooldown
 	me.wins      = mwin
 	me.shoot     = meshoot
 
@@ -232,6 +258,8 @@ function justlikemakegame()
 	leftscheme(you)
 	rightscheme(me)
 
+	timeleft = 5 * 60
+	
 	do
 		local count = balance.initialcountdown
 		printstr = string.format("%d", count)
@@ -239,12 +267,15 @@ function justlikemakegame()
 		for i = 1, count do
 			Timer.add(i, function() printstr = string.format("%d", count-i) end)
 		end
-		Timer.add(count+.01, function() printstr = "GO" end)
+		Timer.add(count+.01, function() printstr = "GO" started = true end)
 		Timer.add(count+  1, function() printstr = "" end)
 	end
 end
 
 function game:update(dt)
+	if started then
+		timeleft = timeleft - dt
+	end
 	-- XInput.update()
 	control.update(dt)
 	Timer.update(dt)
@@ -258,10 +289,11 @@ function game:update(dt)
 	local y = .5 * (me.y + you.y)
 	camera:lookAt(x, y)
 
-	local pad = 250
-	local zx  = lg.getWidth()  / (me.x + pad - you.x)
-	local zy  = lg.getHeight() / (me.y + pad - you.y)
-	camera:zoomTo(math.min(zx, zy))
+	local pad = balance.margin * 2
+	local zx  = lg.getWidth()  / (pad + math.abs(me.x - you.x))
+	local zy  = lg.getHeight() / (pad + math.abs(me.y - you.y))
+	local zum = math.min(math.min(zx, zy), 1)
+	camera:zoomTo(zum)
 end
 
 printstr = ""
@@ -279,6 +311,10 @@ function game:draw()
 
 	lg.setFont(fnt)
 	lg.print("FPS: "..tostring(love.timer.getFPS( )), 40, 10)
+	lg.printf(string.format("%d-%d", you.wins, me.wins), 25, 10, lg.getWidth() - 50, 'center')
+	local min = math.floor(timeleft / 60)
+	local sec = math.floor(timeleft) % 60
+	lg.printf(string.format("%d:%d", min, sec), 25, 30, lg.getWidth() - 50, 'center')
 
 	lg.setFont(hfnt)
 	lg.printf(printstr, 25, lg.getHeight() / 2,lg.getWidth() - 50, 'center')
