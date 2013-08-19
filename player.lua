@@ -67,15 +67,8 @@ end
 
 function Dude:hurt(pain)
 	self.hp = self.hp - (pain or balance.bulletdmg)
-	if self.hp <= 0 and not gamewon then
-		gamewon = true
-		printstr = string.format("%s WINS", self.other.name)
-		self.other.wins = self.other.wins + 1
-		self:setmove(moves.cooldown, 999)
-		Timer.add(4, function()
-			printstr = ""
-			justlikemakegame()
-		end)
+	if self.hp <= 0 and not isGameOver then
+		Signals.emit("gameover", self)
 	end
 end
 

@@ -9,16 +9,10 @@ moves   = require "moves"
 control = require "control"
 Dude    = require "player"
 colors  = require "colors"
+Game    = require "game"
 
-local you = nil
-local me  = nil
-
-camera = nil
-
-timeleft = 0 
-
-local fnt = nil
-local hfnt = nil
+fnt = nil
+hfnt = nil
 
 local leftscheme = nil
 local rightscheme = nil
@@ -27,41 +21,9 @@ gamewon = false
 --- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
 
-function gooey(self, bx, ex)
-	local dw = bx > ex and -1 or 1
-	-- HP bar
-	local size = 30
-	local hpbar_h = balance.health * size
-	local hpbar_w = size
-	local hpleft = (self.hp / balance.health) * hpbar_h
 
-	lg.setLineWidth(1)
-	lg.setColor(colors.fg)
-	local y = 0
-	while y < hpbar_h do
-		lg.line(bx, y, bx + (hpbar_w*dw), y)
-		y = y + hpbar_w
-	end
-
-	lg.setColor(self.idlecolor)
-	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
-	if me.ammo > me.ammotype.cost * me.ammotype.number then
-		lg.setColor(colors.ui)
-	end
-	lg.rectangle('fill', bx + (hpbar_w * dw), hpbar_h, 
-	                     hpbar_w * .5 * dw, self.ammo * -30 / self.ammotype.cost)
-	
-	lg.setLineWidth(3)
-	lg.setColor(self.CDcolor)
-	lg.rectangle('line', bx, 0, hpbar_w * dw, hpbar_h)
-	
-
-	-- lg.print(me.wins .. "", ex, 0)
-	-- lg.print(string.format("A%s", string.char(string.byte(me.ammotype.name))), x, 120 + hpbar_h)
-end
 
 local menu = {}
-local game = {}
 
 function love.load()
 	camera = Camera()
@@ -221,125 +183,7 @@ end
 -- }}}
 
 function start()
-	Gamestate.switch(game)
-end
-
-function game:enter()
-	justlikemakegame()
-end
-
-function justlikemakegame()
-	local ywin, mwin = (you or {wins = 0}).wins, (me or {wins = 0}).wins
-	Boolet.reset()
-	control.reset()
-	Timer.clear()
-	Timer.addPeriodic(.5, function() colors = lfs.load("colors.lua")() end)
-	gamewon = false
-
-	--LEF
-	you = Dude()
-	you.name      = "YELLOW"
-	you.idlecolor = colors.you.idle
-	you.movecolor = colors.you.move
-	you.CDcolor   = colors.you.cooldown
-	you.wins      = ywin
-	you.shoot     = youshoot
-
-	--RIGH
-	me = Dude(900, 700)
-	me.name      = "BLUE"
-	me.idlecolor = colors.me.idle
-	me.movecolor = colors.me.move
-	me.CDcolor   = colors.me.cooldown
-	me.wins      = mwin
-	me.shoot     = meshoot
-
-	me.other  = you
-	you.other = me
-	leftscheme(you)
-	rightscheme(me)
-
-	timeleft = 5 * 60
-	
-	do
-		local count = balance.initialcountdown
-		printstr = string.format("%d", count)
-
-		for i = 1, count do
-			Timer.add(i, function() printstr = string.format("%d", count-i) end)
-		end
-		Timer.add(count+.01, function() printstr = "GO" started = true end)
-		Timer.add(count+  1, function() printstr = "" end)
-	end
-end
-
-function game:update(dt)
-	if started then
-		timeleft = timeleft - dt
-	end
-	-- XInput.update()
-	control.update(dt)
-	Timer.update(dt)
-
-	you:update(dt)
-	me:update(dt)
-
-	Boolet.updateall(dt, me, you)
-
-	local x = .5 * (me.x + you.x)
-	local y = .5 * (me.y + you.y)
-	camera:lookAt(x, y)
-
-	local pad = balance.margin * 2
-	local zx  = lg.getWidth()  / (pad + math.abs(me.x - you.x))
-	local zy  = lg.getHeight() / (pad + math.abs(me.y - you.y))
-	local zum = math.min(math.min(zx, zy), 1)
-	camera:zoomTo(zum)
-end
-
-printstr = ""
-function game:draw()
-	lg.setBackgroundColor(colors.bg)
-	camera:attach()
-	Boolet.drawall()
-	you:draw()
-	me:draw()
-	camera:detach()
-
-	local hw = lg.getWidth() * .5
-	gooey(you, 0, hw)
-	gooey(me, hw * 2, hw)
-	lg.setColor(255,255,255)
-
-	lg.setFont(fnt)
-	lg.print("FPS: "..tostring(love.timer.getFPS( )), 40, 10)
-	lg.printf(string.format("%d-%d", you.wins, me.wins), 25, 10, lg.getWidth() - 50, 'center')
-	local min = math.floor(timeleft / 60)
-	local sec = math.floor(timeleft) % 60
-	lg.printf(string.format("%d:%d", min, sec), 25, 30, lg.getWidth() - 50, 'center')
-
-	lg.setFont(hfnt)
-	lg.printf(printstr, 25, lg.getHeight() / 2,lg.getWidth() - 50, 'center')
-end
-
---XInputlua only overrides the love function
-function love.joystickpressed(joy, btn)
-	-- print(joy, btn)
-	control.joystickdo(joy, btn, false)
-end
-
-alt = false
-function game:keypressed(key, uni)
-	if key == 'f4' and love.keyboard.isDown('lalt') then
-		print("YOU'RE HERE FOREVER")
-		return
-	end
-
-	control.keyboarddo(key, uni)
-end
-
-function game:mousepressed(x, y, btn)
-	control.mousedo(btn)
+	Gamestate.switch(Game(), leftscheme, rightscheme)
 end
 
 function printf(fmt, ...)
