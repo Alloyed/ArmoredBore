@@ -21,13 +21,9 @@ gamewon = false
 --- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
 
-
-
 local menu = {}
 
 function love.load()
-	camera = Camera()
-
 	love.keyboard.setKeyRepeat(.150, .050)
 
 	fnt = lg.newFont('VeraMono.ttf', 20)
@@ -41,6 +37,12 @@ function love.load()
 
 	Gamestate.registerEvents(all_callbacks)
 	Gamestate.switch(menu)
+end
+
+--XInputlua only overrides the love function
+function love.joystickpressed(joy, btn)
+	-- print(joy, btn)
+	control.joystickdo(joy, btn, false)
 end
 
 schemes = {}

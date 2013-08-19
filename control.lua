@@ -97,6 +97,7 @@ function joyupdate(player, joynum, xaxis, yaxis)
 end
 
 function mouseupdate(player)
+	local camera = player.game.camera
 	return function()
 		local x, y = camera:mousepos()
 		local v = Vec((x-player.x) / balance.dashradius ,(y-player.y) / balance.dashradius )

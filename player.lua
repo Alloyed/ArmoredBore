@@ -3,12 +3,14 @@ local Ring  = require "hump.ringbuffer"
 
 local Dude = Class{
 	name = "dude",
-	function(self, x, y)
-		self.x = x or 100
-		self.y = y  or 100
+	function(self, game)
+		assert(game)
+		self.game = game
+		self.x  = 100
+		self.y  = 100
 		self.cx = 100
 		self.cy = 100
-		self.w = 50
+		self.w  = 50 -- radius
 
 		self.joyx = 0
 		self.joyy = 0
@@ -67,7 +69,7 @@ end
 
 function Dude:hurt(pain)
 	self.hp = self.hp - (pain or balance.bulletdmg)
-	if self.hp <= 0 and not isGameOver then
+	if self.hp <= 0 and not self.game.isGameOver then
 		Signals.emit("gameover", self)
 	end
 end

@@ -1,23 +1,17 @@
-
-local you = nil
-local me  = nil
-
 local ls, rs = nil, nil
 
-camera = nil
 
 timeleft = 0
 
-isGameOver = false
-
 function gameover(self)
-	isGameOver = true
+	self.game.isGameOver = true
 	printstr = string.format("%s WINS", self.other.name)
 	self.other.wins = self.other.wins + 1
 	self:setmove(moves.cooldown, 999)
 	Timer.add(4, function()
+		local you = self.game.you
 		printstr = ""
-		Gamestate.switch(Game(), ls, rs)
+		Gamestate.switch(Game(), ls, rs, you.wins, you.other.wins)
 	end)
 end
 
@@ -44,7 +38,7 @@ function gooey(self, bx, ex)
 	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
 
 	-- ammo bar
-	if me.ammo > me.ammotype.cost * me.ammotype.number then
+	if self.ammo > self.ammotype.cost * self.ammotype.number then
 		lg.setColor(colors.ui)
 	end
 	lg.rectangle('fill', bx + (hpbar_w * dw), hpbar_h,
@@ -57,16 +51,17 @@ end
 
 local Game = Class {}
 
-function Game:enter(last, leftscheme, rightscheme)
-	local ywin, mwin = (you or {wins = 0}).wins, (me or {wins = 0}).wins
+function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
+	local ywin, mwin = ywin or 0, mwin or 0
 	Boolet.reset()
 	control.reset()
 	Timer.clear()
 	Timer.addPeriodic(.5, function() colors = lfs.load("colors.lua")() end)
-	isGameOver = false
+	self.isGameOver = false
+	self.camera = Camera()
 
 	--LEF
-	you = Dude()
+	local you = Dude(self)
 	you.name      = "YELLOW"
 	you.idlecolor = colors.you.idle
 	you.movecolor = colors.you.move
@@ -75,7 +70,8 @@ function Game:enter(last, leftscheme, rightscheme)
 	you.shoot     = youshoot
 
 	--RIGH
-	me = Dude(900, 700)
+	local me = Dude(self)
+	me.x, me.y = 900, 700
 	me.name      = "BLUE"
 	me.idlecolor = colors.me.idle
 	me.movecolor = colors.me.move
@@ -88,7 +84,7 @@ function Game:enter(last, leftscheme, rightscheme)
 	ls, rs = leftscheme, rightscheme
 	leftscheme(you)
 	rightscheme(me)
-
+	self.me, self.you = me, you
 	timeleft = 5 * 60
 
 	do
@@ -106,6 +102,7 @@ function Game:enter(last, leftscheme, rightscheme)
 end
 
 function Game:update(dt)
+	local me, you, camera = self.me, self.you, self.camera
 	if started then
 		timeleft = timeleft - dt
 	end
@@ -131,6 +128,7 @@ end
 
 printstr = ""
 function Game:draw()
+	local me, you, camera = self.me, self.you, self.camera
 	lg.setBackgroundColor(colors.bg)
 	camera:attach()
 	Boolet.drawall()
@@ -154,13 +152,6 @@ function Game:draw()
 	lg.printf(printstr, 25, lg.getHeight() / 2,lg.getWidth() - 50, 'center')
 end
 
---XInputlua only overrides the love function
-function love.joystickpressed(joy, btn)
-	-- print(joy, btn)
-	control.joystickdo(joy, btn, false)
-end
-
-alt = false
 function Game:keypressed(key, uni)
 	if key == 'f4' and love.keyboard.isDown('lalt') then
 		print("YOU'RE HERE FOREVER")
