@@ -3,16 +3,17 @@
 require "boilerplate"
 local dump = require "dump"
 --our own things
+balance = require "balance"
+colors  = require "colors"
 Boolet  = require "boolet"
-balance  = require "balance"
 moves   = require "moves"
 control = require "control"
 Dude    = require "player"
-colors  = require "colors"
 Game    = require "game"
 
-fnt = nil
-hfnt = nil
+minfnt = nil
+fnt    = nil
+hfnt   = nil
 
 local leftscheme = nil
 local rightscheme = nil
@@ -21,13 +22,14 @@ gamewon = false
 --- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
 
-local menu = {}
+menu = {}
 
 function love.load()
 	love.keyboard.setKeyRepeat(.150, .050)
 
-	fnt = lg.newFont('VeraMono.ttf', 20)
-	hfnt = lg.newFont('VeraMono.ttf', 50)
+	minfnt = lg.newFont('VeraMono.ttf', 15)
+	fnt    = lg.newFont('VeraMono.ttf', 20)
+	hfnt   = lg.newFont('VeraMono.ttf', 50)
 
 	star = lg.newImage("star.png")
 
@@ -71,6 +73,18 @@ end)
 
 table.insert(schemes, function()
 	return control.schemes.what, "AI"
+end)
+
+table.insert(schemes, function()
+	return function(pl)
+		return control.schemes.replay(pl, "you")
+	end, "Replay as Player 1"
+end)
+
+table.insert(schemes, function()
+	return function(pl)
+		return control.schemes.replay(pl, "me")
+	end, "Replay as Player 2"
 end)
 
 table.insert(schemes, function()
@@ -157,28 +171,30 @@ end
 end
 
 function menu:draw()
+	lg.setBackgroundColor(0, 0, 0)
 	lg.setColor(255, 255, 255)
+	lg.setFont(minfnt)
 	for i, text in ipairs(mtext) do
 		lg.print(text, 10, 100 + i * 20)
 	end
-	lg.print("A", 1, 100 + mindex * 20)
+	lg.print(">", 1, 100 + mindex * 20)
 	lg.print(">byzanz", 450, 400)
 	local y = 0
 	for _, c in pairs(colors.me) do
 		lg.setColor(c)
 		lg.rectangle('fill', 400, 400 + y, 10, 10)
-		y = y + 10	
+		y = y + 10
 	end
 
 	for _, c in pairs(colors.you) do
 		lg.setColor(c)
 		lg.rectangle('fill', 400, 400 + y, 10, 10)
-		y = y + 10	
+		y = y + 10
 	end
-	
+
 	lg.setColor(colors.ui)
 	lg.rectangle('fill', 400, 400 + y, 10, 10)
-	y = y + 10	
+	y = y + 10
 	lg.setColor(colors.bg)
 	lg.rectangle('fill', 400, 400 + y, 10, 10)
 end

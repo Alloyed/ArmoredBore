@@ -106,7 +106,7 @@ local Firing = Class { name = "firing", priority = 3}
 
 function Firing:init(a, t)
 	assert(a)
-	local atype = a.ammotype
+	local atype = balance.bullet
 	self.t  = atype.rate * atype.number
 	self.st = atype.rate
 	self.a = a
@@ -120,10 +120,12 @@ function Firing:update(dt)
 
 	local me = self.a
 	local you = self.a.other
-	local atype = self.a.ammotype
+	local atype = balance.bullet
 
 	if self.st < dt then
 		if me.ammo > atype.cost then
+			local snd = love.audio.newSource("snd/me.wav")
+			snd:play()
 			me.ammo = me.ammo - atype.cost
 			local b = Boolet(self.a)
 			-- TODO: proper targeting

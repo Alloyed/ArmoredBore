@@ -6,12 +6,10 @@ return {
 		speed = 15,
 		dmg = 1,
 		cost = 30,
-		rate = .05
-	},
-
-	bomb = {
-		dmg = 1,
-		bombcost = 10
+		rate = .05,
+		size = 8,
+		number = 3,
+		decay = 10 -- s
 	},
 
 	maxammo = 180,

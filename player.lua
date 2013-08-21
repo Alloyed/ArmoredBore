@@ -16,16 +16,11 @@ local Dude = Class{
 		self.joyy = 0
 		self.hp = balance.health
 		self.ammo = 0
-		self.buf = Ring(34)
-		for k, v in pairs(Boolet.types) do
-			self.buf:insert(v)
-		end
-		self.buf:remove()
-		self.ammotype = self.buf:next()
 
 		self.move = moves.cooldown(self, balance.initialcountdown)
 		self.boolets = {}
 		self.bnum = 0
+		self.movebuf = {}
 	end
 }
 
@@ -58,6 +53,10 @@ function Dude:popmove()
 	return self.move
 end
 
+function Dude:startupdate(dt)
+	self.movebuf[#self.movebuf+1] = {}
+end
+
 function Dude:update(dt)
 	self.ammo = math.min(self.ammo + 1, balance.maxammo)
 	self.move:update(dt)
@@ -69,8 +68,11 @@ end
 
 function Dude:hurt(pain)
 	self.hp = self.hp - (pain or balance.bulletdmg)
+	snd = love.audio.newSource("snd/beep.wav")
+	snd:setVolume(.5)
+	snd:play()
 	if self.hp <= 0 and not self.game.isGameOver then
-		Signals.emit("gameover", self)
+		Signals.emit("gamelost", self)
 	end
 end
 

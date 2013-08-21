@@ -16,20 +16,20 @@ end
 
 return {
 	me = {
-		idle     = {web(0x0500FF)},
-		move     = {web(0x0079FF)},
-		cooldown = {web(0x405E80)}
+		idle     = {web(0x0C08BE)},
+		move     = {web(0x0379E6)},
+		cooldown = {web(0x47537A)}
 	},
 
 	you = {
-		idle     = {web(0xFF9A00)},
+		idle     = {web(0xFF7E00)},
 		move     = {web(0xFFC000)},
 		cooldown = {web(0x806640)}
 	},
 
 	bg = {web(
-		0x335410
-		-- 0x000000
+		 0x335410
+		-- 0x333353
 		-- 0x123456
 		)},
 	ui = {0, 255, 10},

@@ -1,7 +1,8 @@
+local json = require "misc.dkjson"
+
 module(..., package.seeall)
 
 --TODO: rewrite love.run to include this stuff
--- XInput = require('XInputLUA') --TODO: selectively disable
 local joypad = require 'joypad'
 
 local functions = {}
@@ -66,20 +67,21 @@ end
 
 function makeroll(dude)
 	return function()
+		dude.movebuf[#dude.movebuf].roll = true
 		dude:pushmove(moves.roll, dude.joyx, dude.joyy)
 	end
 end
 
 function shootat(dude)
 	return function()
+		dude.movebuf[#dude.movebuf].shoot = true
 		dude:pushmove(moves.fire)
 	end
 end
 
-function switch(dude)
-	return function()
-		dude.ammotype = dude.buf:next()
-	end
+local function apply(player, joyx, joyy)
+	player.joyx, player.joyy = joyx, joyy
+	player.movebuf[#player.movebuf].joy = {joyx, joyy}
 end
 
 function joyupdate(player, joynum, xaxis, yaxis)
@@ -89,9 +91,9 @@ function joyupdate(player, joynum, xaxis, yaxis)
 		local xaxis, yaxis = math.abs(xaxis), math.abs(yaxis)
 		local v = Vec(xm * ljoy.getAxis(joynum, xaxis), ym * lj.getAxis(joynum, yaxis))
 		if v:len2() < deadzone * deadzone then
-			player.joyx, player.joyy = 0, 0
+			apply(player, 0, 0)
 		else
-			player.joyx, player.joyy = v.x, v.y
+			apply(player, v.x, v.y)
 		end
 	end
 end
@@ -104,7 +106,7 @@ function mouseupdate(player)
 		if v:len() > 1 then
 			v:normalize_inplace()
 		end
-		player.joyx, player.joyy = v:unpack()
+		apply(player, v.x, v.y)
 	end
 end
 
@@ -130,7 +132,7 @@ function kbupdate(player)
 			end
 		end
 		v:normalize_inplace()
-		player.joyx, player.joyy = v:unpack()
+		apply(player, v.x, v.y)
 	end
 end
 
@@ -147,7 +149,22 @@ function robot(player)
 			cdown = true
 			Timer.add(2, function() cdown = false end)
 		end
-		player.joyx, player.joyy = v:unpack()
+		apply(player, v.x, v.y)
+	end
+end
+
+function replay(player, buffa)
+	local roll, shoot =
+	makeroll(player), shootat(player)
+	return function()
+		local cbuf = buffa[#player.movebuf] or buffa[#buffa]
+		if cbuf.roll then
+			roll()
+		elseif cbuf.shoot then
+			shoot()
+		end
+		local joyx, joyy = unpack(cbuf.joy)
+		apply(player, joyx, joyy)
 	end
 end
 
@@ -168,26 +185,32 @@ function schemes.joypad(player, joy, buttons, num)
 	end
 	register({"joystick", num, trig}, shootat(player))
 	register({"joystick", num, bump}, makeroll(player))
-	register({"joystick", num, joy3}, switch(player))
+	-- register({"joystick", num, joy3}, switch(player))
 	register("update", joyupdate(player, num, joy1, joy2))
 end
 
 function schemes.moose(player)
 	register({"mouse", "l"}, shootat(player))
 	register({"mouse", "r"}, makeroll(player))
-	register({"mouse", "m"}, switch(player))
+	-- register({"mouse", "m"}, switch(player))
 	register("update", mouseupdate(player))
 end
 
 function schemes.numpad(player)
 	register({"keyboard", "kp0"}, shootat(player))
 	register({"keyboard", "kp5"}, makeroll(player))
-	register({"keyboard", "kp+"}, switch(player))
+	-- register({"keyboard", "kp+"}, switch(player))
 	register("update", kbupdate(player))
 end
 
 function schemes.what(player)
 	register("update", robot(player))
+end
+
+function schemes.replay(player, key)
+	local str = lfs.read("buffa.json")
+	local buf = json.decode(str)
+	register("update", replay(player, buf[key]))
 end
 
 

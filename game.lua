@@ -1,18 +1,43 @@
+local tween = require "tween"
+local json = require "misc/dkjson"
 local ls, rs = nil, nil
+local socket = require "socket"
 
-
+bgm = love.audio.newSource("snd/01 Airglow fires.mp3")
+printstr = ""
 timeleft = 0
 
-function gameover(self)
-	self.game.isGameOver = true
+function gameover(game)
+	local you = game.you
+	local me  = game.me
+	me:setmove(moves.cooldown, 5)
+	you:setmove(moves.cooldown, 5)
+
+	game.isGameOver = true
+	tween.tween_for(4, tween.range(1, .5), function(t) bgm:setPitch(t) end )
+	Timer.add(4, function()
+		printstr = ""
+		local ss = json.encode({you = you.movebuf, me = me.movebuf})
+		lfs.write("buffa.json", ss)
+		print("replay logged at buffa.json")
+		local addr, port = "192.241.134.64", 64083
+		--local tcp, err = socket.connect(addr, port)
+		--assert(tcp, err)
+		--tcp:send(ss)
+		--tcp:close()
+		Gamestate.switch(Game(), ls, rs, you.wins, me.wins)
+	end)
+end
+
+function gamelost(self)
 	printstr = string.format("%s WINS", self.other.name)
 	self.other.wins = self.other.wins + 1
-	self:setmove(moves.cooldown, 999)
-	Timer.add(4, function()
-		local you = self.game.you
-		printstr = ""
-		Gamestate.switch(Game(), ls, rs, you.wins, you.other.wins)
-	end)
+	Signals.emit("gameover", self.game)
+end
+
+function gamedraw(game)
+	printstr = "DRAW! YOU'RE ALL LOSERS"
+	Signals.emit("gameover", game)
 end
 
 -- FIXME kill me it hurts to live
@@ -38,11 +63,11 @@ function gooey(self, bx, ex)
 	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
 
 	-- ammo bar
-	if self.ammo > self.ammotype.cost * self.ammotype.number then
+	if self.ammo > balance.bullet.cost * balance.bullet.number then
 		lg.setColor(colors.ui)
 	end
 	lg.rectangle('fill', bx + (hpbar_w * dw), hpbar_h,
-	                     hpbar_w * .5 * dw, self.ammo * -30 / self.ammotype.cost)
+	                     hpbar_w * .5 * dw, self.ammo * -30 / balance.bullet.cost)
 	-- HPbar outline
 	lg.setLineWidth(3)
 	lg.setColor(self.CDcolor)
@@ -52,11 +77,21 @@ end
 local Game = Class {}
 
 function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
+	bgm:stop()
+	bgm:setPitch(1)
+	bgm:setVolume(.2)
+	bgm:play()
 	local ywin, mwin = ywin or 0, mwin or 0
 	Boolet.reset()
 	control.reset()
 	Timer.clear()
-	Timer.addPeriodic(.5, function() colors = lfs.load("colors.lua")() end)
+	Timer.addPeriodic(.5, function()
+		local fine, cl, bl = pcall(function()
+			return lfs.load("colors.lua")(),
+			       lfs.load("balance.lua")()
+		end)
+		if fine then colors, balance = cl, bl end
+	end)
 	self.isGameOver = false
 	self.camera = Camera()
 
@@ -85,7 +120,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	leftscheme(you)
 	rightscheme(me)
 	self.me, self.you = me, you
-	timeleft = 5 * 60
+	self.timeleft = 60
 
 	do
 		local count = balance.initialcountdown
@@ -94,19 +129,32 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 		for i = 1, count do
 			Timer.add(i, function() printstr = string.format("%d", count-i) end)
 		end
-		Timer.add(count+.01, function() printstr = "GO" started = true end)
+		Timer.add(count+.01, function() printstr = "GO" self.started = true end)
 		Timer.add(count+  1, function() printstr = "" end)
 	end
+
+	Signals.clear("gamelost")
+	Signals.register("gamelost", gamelost)
+
+	Signals.clear("gamedraw")
+	Signals.register("gamedraw", gamedraw)
+
 	Signals.clear("gameover")
 	Signals.register("gameover", gameover)
 end
 
 function Game:update(dt)
 	local me, you, camera = self.me, self.you, self.camera
-	if started then
-		timeleft = timeleft - dt
+	if self.started then
+		if self.timeleft <= 0 and not self.isGameOver then
+			Signals.emit("gamedraw", self)
+		end
+		self.timeleft = math.max(0, self.timeleft - dt)
 	end
 	-- XInput.update()
+	you:startupdate(dt)
+	me:startupdate(dt)
+
 	control.update(dt)
 	Timer.update(dt)
 
@@ -144,6 +192,7 @@ function Game:draw()
 	lg.setFont(fnt)
 	lg.print("FPS: "..tostring(love.timer.getFPS( )), 40, 10)
 	lg.printf(string.format("%d-%d", you.wins, me.wins), 25, 10, lg.getWidth() - 50, 'center')
+	local timeleft = self.timeleft
 	local min = math.floor(timeleft / 60)
 	local sec = math.floor(timeleft) % 60
 	lg.printf(string.format("%d:%d", min, sec), 25, 30, lg.getWidth() - 50, 'center')
@@ -153,9 +202,13 @@ function Game:draw()
 end
 
 function Game:keypressed(key, uni)
+	print(key)
 	if key == 'f4' and love.keyboard.isDown('lalt') then
 		print("YOU'RE HERE FOREVER")
 		return
+	elseif key == 'escape' then
+		bgm:stop()
+		Gamestate.switch(menu)
 	end
 
 	control.keyboarddo(key, uni)
