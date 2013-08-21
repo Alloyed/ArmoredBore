@@ -36,7 +36,7 @@ end
 function joypad.getTrigger(trigger_id, snap)
 	snap = snap or false -- TODO: snapping
 	local jn, axis, thres = unpack( joypad.triggers[trigger_id] )
-	return joyh.getAxis(jn, axis)
+	return joyh.getAxis(jn, axis) > thres
 end
 
 function joypad.getHat(joynum, hat)
@@ -113,13 +113,25 @@ function joypad.update(dt)
 			joypad.lastBtns[id] = btn
 		end
 		-- Triggers
+		for id, _ in ipairs(joypad.triggers) do
+			local btn = joypad.getTrigger(id)
+			if btn ~= (joypad.lastTriggers[id] or false) then
+				if btn == true and joypad.triggeron then
+					joypad.triggeron(id)
+				elseif btn == false and joypad.buttonreleased then
+					joypad.triggeroff(id)
+				end
+			end
+			joypad.lastTriggers[id] = btn
+		end
 	end
 end
 
-function joypad.getCallbacks(from)
-	from = from or {}
+function joypad.setCallbacks(from)
 	for _, cbackname in ipairs(joypad.callbacks) do
+		-- print(from[cbackname])
 		joypad[cbackname] = from[cbackname]
+		from[cbackname]("set")
 	end
 end
 
