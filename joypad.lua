@@ -1,10 +1,12 @@
-local joyh = nil
-
-if string.match(love._os, "TODO") then
-	joyh = require "XInput"
-else
-	joyh = love.joystick
-end
+local joyh = (function()
+	if string.match(love._os, "indows") then
+		ok, res = pcall(require, "XInput")
+		if ok then
+			return res
+		end
+	end
+	return love.joystick
+end)()
 
 local joypad    = {}
 joypad.triggers = {}
@@ -79,10 +81,11 @@ function joypad.getAxes(joynum)
 end
 
 function joypad.load(fname)
+	assert(nil, "TODO")
 end
 
 function joypad.init()
-	print("hi")
+	assert(true, "TODO")
 end
 
 local function to_btn_id(jnum, bnum)
@@ -94,6 +97,7 @@ local function from_btn_id(id)
 	return jnum, id - jnum
 end
 
+-- TODO: a jungle of identifiers here
 function joypad.update(dt)
 	if joyh.update then
 		joyh.update()
@@ -129,9 +133,7 @@ end
 
 function joypad.setCallbacks(from)
 	for _, cbackname in ipairs(joypad.callbacks) do
-		-- print(from[cbackname])
 		joypad[cbackname] = from[cbackname]
-		from[cbackname]("set")
 	end
 end
 

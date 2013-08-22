@@ -2,13 +2,17 @@ local json = require "misc.dkjson"
 
 module(..., package.seeall)
 
---TODO: rewrite love.run to include this stuff
 local joypad = require 'joypad'
 
 local functions = {}
 local updatefn = {}
 
 function reset()
+	joypad.init()
+	local cb = {}
+	function cb.buttonpressed()
+	end
+	joypad.setCallbacks({buttonpressed = joystickdo, triggeron = triggerdo})
 	functions = {}
 	updatefn = {}
 end
@@ -18,50 +22,50 @@ function register(key, fn)
 		table.insert(updatefn, fn)
 		return
 	end
-	functions[tokey(key)] = fn
+	functions[tokey(unpack(key))] = fn
 end
 
-function tokey(tabl)
-	local one, two, three = unpack(tabl)
-	if one == "update" then
+function tokey(...)
+	local name, arg1, arg2 = ...
+	if name == "update" then
 		return "update"
-	elseif one == "joystick" then
-		return string.format("%s:%d:%d", one, two, three)
-	elseif one == "keyboard" then
-		return string.format("%s:%s", one, two)
-	elseif one == "mouse" then
-		return string.format("%s:%s", one, two)
+	elseif name == "joystick" then
+		return string.format("%s:%d:%d", name, arg1, arg2)
+	elseif name == "keyboard" or
+		    name == "mouse"    or
+			 name == "trigger"  then
+		return string.format("%s:%s", name, arg1)
 	else
+		assert(nil, string.format("Invalid event of type %s", name))
 		return nil --you should probably catch this
 	end
 end
 
-function joystickdo(joy, btn, wasreleased)
-	local fn = functions[tokey({"joystick", joy, btn})]
-	if fn then
-		fn()
-	end
+function joystickdo(joy, btn)
+	local fn = functions[tokey("joystick", joy, btn)]
+	if fn then return fn() end
 end
 
 function keyboarddo(btn, uni)
-	local fn = functions[tokey({"keyboard", btn, uni})]
-	if fn then
-		fn()
-	end
+	local fn = functions[tokey("keyboard", btn, uni)]
+	if fn then return fn() end
 end
 
 function mousedo(btn)
-	local fn = functions[tokey({"mouse", btn})]
-	if fn then
-		fn()
-	end
+	local fn = functions[tokey("mouse", btn)]
+	if fn then return fn() end
+end
+
+function triggerdo(trg)
+	local k = tokey("trigger", trg)
+	local fn = functions[k]
+	if fn then return fn() end
 end
 
 function update(dt)
-	for i, v in ipairs(updatefn) do
-		if v then
-			v(dt)
-		end
+	joypad.update(dt)
+	for _, fn in ipairs(updatefn) do
+		if fn then fn(dt) end
 	end
 end
 
@@ -79,17 +83,16 @@ function shootat(dude)
 	end
 end
 
+-- this looks funky but that's why it's hidden in a function
 local function apply(player, joyx, joyy)
 	player.joyx, player.joyy = joyx, joyy
 	player.movebuf[#player.movebuf].joy = {joyx, joyy}
 end
 
-function joyupdate(player, joynum, xaxis, yaxis)
-	local deadzone = .2
+function joyupdate(player, stick)
+	local deadzone = .25
 	return function()
-		local xm, ym = xaxis > 0 and 1 or -1, yaxis > 0 and 1 or -1
-		local xaxis, yaxis = math.abs(xaxis), math.abs(yaxis)
-		local v = Vec(xm * ljoy.getAxis(joynum, xaxis), ym * lj.getAxis(joynum, yaxis))
+		local v = Vec(joypad.getStick(stick))
 		if v:len2() < deadzone * deadzone then
 			apply(player, 0, 0)
 		else
@@ -179,14 +182,14 @@ function schemes.joypad(player, joy, buttons, num)
 	end
 
 	if buttons == 'l' then
-		bump, trig = 5, 1
+		bump, trig = 5, 3
 	else
-		bump, trig = 6, 2
+		bump, trig = 6, 6
 	end
-	register({"joystick", num, trig}, shootat(player))
+	register({"trigger", joypad.newTrigger(num, trig, .5)}, shootat(player))
 	register({"joystick", num, bump}, makeroll(player))
 	-- register({"joystick", num, joy3}, switch(player))
-	register("update", joyupdate(player, num, joy1, joy2))
+	register("update", joyupdate(player, joypad.newStick(num, joy1, joy2)))
 end
 
 function schemes.moose(player)

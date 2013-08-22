@@ -78,7 +78,6 @@ local Game = Class {}
 
 function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	bgm:stop()
-	bgm:setPitch(1)
 	bgm:setVolume(.2)
 	bgm:play()
 	local ywin, mwin = ywin or 0, mwin or 0
@@ -120,7 +119,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	leftscheme(you)
 	rightscheme(me)
 	self.me, self.you = me, you
-	self.timeleft = 60
+	self.timeleft = 10 * 60
 
 	do
 		local count = balance.initialcountdown

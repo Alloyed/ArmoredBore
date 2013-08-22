@@ -29,8 +29,10 @@ local function cdraw(self, c)
 	local a = self.a
 	c = c or a.idlecolor
 	lg.setColor(c)
+	lg.setLineStyle('smooth')
 
 	lg.circle('fill', a.x, a.y, a.w)
+	lg.circle('line', a.x, a.y, a.w)
 end
 
 function shapedraw(self, shape, color)
@@ -48,6 +50,7 @@ function shapedraw(self, shape, color)
 	lg.setColor(a.idlecolor)
 	if a.cx then
 		lg.setLineWidth(5)
+		lg.setLineStyle('smooth')
 		lg.circle('line', a.cx, a.cy, balance.dashradius)
 	end
 end

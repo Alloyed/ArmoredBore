@@ -31,7 +31,7 @@ end
 function love.draw()
 	local n = 50
 	for x, btn in joypad.getButtons(1) do
-		local t = btn and 'fill' or 'line' 
+		local t = btn and 'fill' or 'line'
 		lg.rectangle(t, (x * n), n, n, n)
 	end
 	for x, val in joypad.getAxes(1) do

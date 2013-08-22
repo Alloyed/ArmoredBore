@@ -42,10 +42,10 @@ function love.load()
 end
 
 --XInputlua only overrides the love function
-function love.joystickpressed(joy, btn)
+--function love.joystickpressed(joy, btn)
 	-- print(joy, btn)
-	control.joystickdo(joy, btn, false)
-end
+--	control.joystickdo(joy, btn, false)
+--end
 
 schemes = {}
 
