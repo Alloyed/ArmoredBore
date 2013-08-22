@@ -114,24 +114,23 @@ function mouseupdate(player)
 end
 
 local ks = {
-	Vec(-1,  1),
-	Vec( 0,  1),
-	Vec( 1,  1),
-	Vec(-1,  0),
-	Vec( 0,  0),
-	Vec( 1,  0),
-	Vec(-1, -1),
-	Vec( 0, -1),
-	Vec( 1, -1)
+	-- "kp1" = Vec(-1,  1),
+	down     = Vec( 0,  1),
+	-- "kp3" = Vec( 1,  1),
+	left     = Vec(-1,  0),
+	-- "kp5" = Vec( 0,  0),
+	right    = Vec( 1,  0),
+	-- "kp7" = Vec(-1, -1),
+	up       = Vec( 0, -1)
+	-- "kp9" = Vec( 1, -1)
 }
 
 function kbupdate(player)
 	return function()
-		local kb = love.keyboard.isDown
 		local v = Vec(0, 0)
-			for k, val in ipairs(ks) do
-			if kb("kp"..tostring(k)) then
-				v = v + val
+			for key, dist in pairs(ks) do
+			if lk.isDown(key) then
+				v = v + dist
 			end
 		end
 		v:normalize_inplace()
@@ -173,18 +172,34 @@ end
 
 schemes = {}
 
+local xpad = nil
+if love._os:match("indows") then
+	assert(nil, "TODO: windows gamepad bindings")
+	xpad = {}
+else
+	xpad = {
+		-- Axes
+		lx = 1, ly = 2, lt = 3,
+		rx = 4, ry = 5, rt = 6,
+		-- Buttons
+		lb = 5,  rb = 6,
+		ls = 11, rs = 12
+	}
+end
+
 function schemes.joypad(player, joy, buttons, num)
+	assert(player)
 	local joy1, joy2, bump, trig
 	if joy == 'l' then
-		joy1, joy2, joy3 = 1, 2, 11
+		joy1, joy2, joy3 = xpad.lx, xpad.ly, xpad.ls
 	else
-		joy1, joy2, joy3 = 4, 5, 12
+		joy1, joy2, joy3 = xpad.rx, xpad.ry, xpad.rs
 	end
 
 	if buttons == 'l' then
-		bump, trig = 5, 3
+		bump, trig = xpad.lb, xpad.lt
 	else
-		bump, trig = 6, 6
+		bump, trig = xpad.rb, xpad.rt
 	end
 	register({"trigger", joypad.newTrigger(num, trig, .5)}, shootat(player))
 	register({"joystick", num, bump}, makeroll(player))
@@ -200,8 +215,9 @@ function schemes.moose(player)
 end
 
 function schemes.numpad(player)
-	register({"keyboard", "kp0"}, shootat(player))
-	register({"keyboard", "kp5"}, makeroll(player))
+	player.segments = 8 -- 8 way style for dpads
+	register({"keyboard", "z"}, shootat(player))
+	register({"keyboard", "x"}, makeroll(player))
 	-- register({"keyboard", "kp+"}, switch(player))
 	register("update", kbupdate(player))
 end

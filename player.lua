@@ -1,7 +1,7 @@
 local moves = require "moves"
 local Ring  = require "hump.ringbuffer"
 
-local Dude = Class{
+local Dude = Class {
 	name = "dude",
 	function(self, game)
 		assert(game)
@@ -11,6 +11,7 @@ local Dude = Class{
 		self.cx = 100
 		self.cy = 100
 		self.w  = 50 -- radius
+		self.segments = 33
 
 		self.joyx = 0
 		self.joyy = 0
@@ -60,6 +61,10 @@ end
 function Dude:update(dt)
 	self.ammo = math.min(self.ammo + 1, balance.maxammo)
 	self.move:update(dt)
+end
+
+function Dude:predraw()
+	self.move:predraw()
 end
 
 function Dude:draw()

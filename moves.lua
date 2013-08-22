@@ -14,7 +14,7 @@ end
 
 local function polydraw(self, c)
 	local a = self.a
-	c = c or a.idlecolor
+	c = c or a.colors.idle
 	local hex = polygon(SIDES)
 
 	lg.setColor(c)
@@ -25,34 +25,40 @@ local function polydraw(self, c)
 	lg.pop()
 end
 
-local function cdraw(self, c)
+local function cdraw(self, c, seg)
 	local a = self.a
-	c = c or a.idlecolor
+	c = c or a.colors.idle
 	lg.setColor(c)
 	lg.setLineStyle('smooth')
 
-	lg.circle('fill', a.x, a.y, a.w)
-	lg.circle('line', a.x, a.y, a.w)
+	lg.circle('fill', a.x, a.y, a.w, seg)
+	lg.circle('line', a.x, a.y, a.w, seg)
 end
 
-function shapedraw(self, shape, color)
-	if shape == 'poly' then
-		polydraw(self, color)
-	else
-		cdraw(self, color)
-	end
+function predraw(self)
 	local a = self.a
-
-	lg.setColor(255, 255, 255, 255)
-	local sw = a.w / 5
-	lg.circle('fill', a.x + a.joyx * (a.w - sw), a.y + a.joyy * (a.w - sw), sw)
-
-	lg.setColor(a.idlecolor)
+	lg.setColor(a.colors.idle)
 	if a.cx then
 		lg.setLineWidth(5)
 		lg.setLineStyle('smooth')
-		lg.circle('line', a.cx, a.cy, balance.dashradius)
+		lg.circle('line', a.cx, a.cy, balance.dashradius, a.segments * 1.5)
 	end
+end
+
+function shapedraw(self, color)
+	local a = self.a
+
+	local seg = a.segments
+	cdraw(self, color, seg)
+
+	lg.setStencil(function () return cdraw(self, {255, 255, 255}, seg) end)
+	lg.setColor(a.colors.center)
+	local sw = a.w / 4
+	local sx = a.x + a.joyx * (a.w - sw)
+	local sy = a.y + a.joyy * (a.w - sw)
+	lg.circle('fill', sx, sy, sw, seg)
+	lg.circle('line', sx, sy, sw, seg)
+	lg.setStencil()
 end
 
 local Idle = Class {
@@ -74,6 +80,8 @@ function Idle:update(dt)
 	a.cx = a.x
 	a.cy = a.y
 end
+
+Idle.predraw = predraw
 
 function Idle:draw()
 	shapedraw(self)
@@ -97,8 +105,10 @@ function CD:update(dt)
 	self.a.cx, self.a.cy = self.a.x, self.a.y
 end
 
+CD.predraw = predraw
+
 function CD:draw()
-	shapedraw(self, 'circle', self.a.CDcolor)
+	shapedraw(self, self.a.colors.cooldown)
 end
 
 function CD:dispose()
@@ -142,8 +152,10 @@ function Firing:update(dt)
 	end
 end
 
+Firing.predraw = predraw
+
 function Firing:draw()
-	shapedraw(self, 'circle', self.a.movecolor)
+	shapedraw(self, self.a.colors.move)
 end
 
 local Roll = Class { name = "roll", priority = 5 }
@@ -162,8 +174,8 @@ function Roll:init(a, joyx, joyy)
 	self.a = a
 	if joyx == 0 and joyy == 0 then self.ded = true return end
 	local d = Vec(joyx, joyy):normalized() * balance.dashradius
-	self.getX = tween.tween_for(self.t, tween.exp(), tween.range(a.x, a.x + d.x))
-	self.getY = tween.tween_for(self.t, tween.exp(), tween.range(a.y, a.y + d.y))
+	self.getX = tween.tween_for(self.t, tween.pow(8), tween.range(a.x, a.x + d.x))
+	self.getY = tween.tween_for(self.t, tween.pow(8), tween.range(a.y, a.y + d.y))
 end
 
 local function atkroll(me, you)
@@ -211,8 +223,10 @@ function Roll:update(dt)
 	end
 end
 
+Roll.predraw = predraw
+
 function Roll:draw()
-	shapedraw(self, 'circle', self.a.movecolor)
+	shapedraw(self, self.a.colors.move)
 end
 
 return { idle = Idle, roll = Roll, cooldown = CD, fire = Firing }

@@ -59,7 +59,7 @@ function gooey(self, bx, ex)
 	end
 
 	-- Actual HPbar
-	lg.setColor(self.idlecolor)
+	lg.setColor(self.colors.idle)
 	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
 
 	-- ammo bar
@@ -70,7 +70,7 @@ function gooey(self, bx, ex)
 	                     hpbar_w * .5 * dw, self.ammo * -30 / balance.bullet.cost)
 	-- HPbar outline
 	lg.setLineWidth(3)
-	lg.setColor(self.CDcolor)
+	lg.setColor(self.colors.cooldown)
 	lg.rectangle('line', bx, 0, hpbar_w * dw, hpbar_h)
 end
 
@@ -86,7 +86,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	Timer.clear()
 	Timer.addPeriodic(.5, function()
 		local fine, cl, bl = pcall(function()
-			return lfs.load("colors.lua")(),
+			return lfs.load("colors.lua") (),
 			       lfs.load("balance.lua")()
 		end)
 		if fine then colors, balance = cl, bl end
@@ -97,19 +97,15 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	--LEF
 	local you = Dude(self)
 	you.name      = "YELLOW"
-	you.idlecolor = colors.you.idle
-	you.movecolor = colors.you.move
-	you.CDcolor   = colors.you.cooldown
+	you.colors    = colors.you
 	you.wins      = ywin
 	you.shoot     = youshoot
 
 	--RIGH
 	local me = Dude(self)
-	me.x, me.y = 900, 700
+	me.x, me.y = 700, 700
 	me.name      = "BLUE"
-	me.idlecolor = colors.me.idle
-	me.movecolor = colors.me.move
-	me.CDcolor   = colors.me.cooldown
+	me.colors    = colors.me -- lel
 	me.wins      = mwin
 	me.shoot     = meshoot
 
@@ -173,16 +169,53 @@ function Game:update(dt)
 	camera:zoomTo(zum)
 end
 
+require "bloom"
+local bloom = CreateBloomEffect(.7 * lg.getWidth(), .7 * lg.getHeight())
+-- local bloom = CreateBloomEffect(32, 32)
+
+local bgimg = lg.newImage("check.png")
+bgimg:setWrap("repeat", "repeat")
+bgimg:setFilter('nearest', 'nearest')
+function bg(camera, back, fore)
+	local sq = 256
+	local bx, by = camera:worldCoords(0, 0)
+	local ex, ey = camera:worldCoords(lg.getMode())
+	local dx, dy = ex - bx, ey - by
+	local q = lg.newQuad(bx, by, dx, dy, 256, 256)
+
+	lg.setColor(fore)
+	lg.setColorMode('modulate')
+	lg.drawq(bgimg, q, bx, by)
+end
+
 printstr = ""
 function Game:draw()
 	local me, you, camera = self.me, self.you, self.camera
+
+	-- bloom:predraw()
+
 	lg.setBackgroundColor(colors.bg)
+
 	camera:attach()
+	bg(camera, colors.bg, colors.bg2)
+	you:predraw()
+	me:predraw()
 	Boolet.drawall()
 	you:draw()
 	me:draw()
 	camera:detach()
-
+	--[[
+	bloom:enabledrawtobloom()
+	camera:attach()
+	bg(camera, colors.bg, colors.bg2)
+	you:predraw()
+	me:predraw()
+	Boolet.drawall()
+	you:draw()
+	me:draw()
+	camera:detach()
+	-- bloom:postdraw()
+	]]
 	local hw = lg.getWidth() * .5
 	gooey(you, 0, hw)
 	gooey(me, hw * 2, hw)
@@ -200,8 +233,8 @@ function Game:draw()
 	lg.printf(printstr, 25, lg.getHeight() / 2,lg.getWidth() - 50, 'center')
 end
 
+sc = 1
 function Game:keypressed(key, uni)
-	print(key)
 	if key == 'f4' and love.keyboard.isDown('lalt') then
 		print("YOU'RE HERE FOREVER")
 		return

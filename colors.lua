@@ -17,21 +17,32 @@ end
 return {
 	me = {
 		idle     = {web(0x0C08BE)},
+		--idle     = {web(0x0379E6)},
 		move     = {web(0x0379E6)},
-		cooldown = {web(0x47537A)}
+		cooldown = {web(0x47537A)},
+		center   = {web(0xDDDDDD)}
 	},
-
+	-- YELLO 
 	you = {
 		idle     = {web(0xFF7E00)},
 		move     = {web(0xFFC000)},
-		cooldown = {web(0x806640)}
+		cooldown = {web(0x806640)},
+		center   = {web(0xDDDDDD)}
 	},
 
-	bg = {web(
-		 0x335410
-		-- 0x333353
-		-- 0x123456
-		)},
-	ui = {0, 255, 10},
-	fg = {web(0xFFFFFF)}
+	--[[
+	you = {
+		idle     = {web(0xF94433)},
+		move     = {web(0xFFC000)},
+		cooldown = {web(0x806640)}
+	},
+	]]
+	bg  = {web(
+	0x335410
+	)},
+	bg2 = {web(
+	0x43A015
+	)},
+	ui  = {0, 255, 10},
+	fg  = {web(0xFFFFFF)}
 }

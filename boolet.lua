@@ -36,9 +36,9 @@ function Boolet:init(owner)
 	p:setLifetime (-1)
 	p:setSizes (.1)
 	p:setParticleLife (.1)
-	local c = self.owner.idlecolor
+	local c = self.owner.colors.idle
 	p:setColors(c[1], c[2], c[3], 255)
-	--p:setRadialAcceleration(.1, .5)
+	-- p:setRadialAcceleration(.1, .5)
 
 	self.trail = p
 end
@@ -104,7 +104,7 @@ function Boolet:isTouching(dude)
 end
 
 function Boolet:draw()
-	local rc = self.owner.idlecolor
+	local rc = self.owner.colors.idle
 	--lg.draw(self.trail)
 	lg.setColor(rc)
 	lg.circle('fill', self.x, self.y, balance.bullet.size)

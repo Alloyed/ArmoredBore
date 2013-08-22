@@ -60,8 +60,8 @@ for i=1, ljoy.getNumJoysticks() do
 			return control.schemes.joypad(pl, 'r', 'r', i)
  		end, "Controller " .. i .. "(right)"
 	end)
-	table.insert(schemes, function(pl)
-		return function()
+	table.insert(schemes, function()
+		return function(pl)
 			return control.schemes.joypad(pl, 'l', 'r', i)
 		end, "Controller " .. i .. "(full)"
 	end)
@@ -92,7 +92,7 @@ table.insert(schemes, function()
 end)
 
 local mindex = 1
-local mtext  = {"Start game", "whoops", "whoops", "Options", "Quit"}
+local mtext  = {"Start game", "whoops", "whoops", "whoops", "Quit"}
 local mfn    = { function() start() end,
                  function() selectA() end,
 					  function() selectB() end,
@@ -117,6 +117,7 @@ end
 
 function menu:enter()
 	mindex = 1
+	Aind, Bind = 0, 1
 	selectA()
 	selectB()
 end
@@ -178,6 +179,7 @@ function menu:draw()
 		lg.print(text, 10, 100 + i * 20)
 	end
 	lg.print(">", 1, 100 + mindex * 20)
+
 	lg.print(">byzanz", 450, 400)
 	local y = 0
 	for _, c in pairs(colors.me) do
