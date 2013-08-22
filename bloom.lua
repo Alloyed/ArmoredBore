@@ -96,7 +96,7 @@ function CreateBloomEffect(xsize, ysize)
             return vec4(extract, 1.0);
          }
       ]],
-      
+
       combine = [[
          extern Image bloomtex;
          
@@ -204,28 +204,27 @@ function CreateBloomEffect(xsize, ysize)
    function bloom:getIntensity()
       return intensity_base, intensity_bloom
    end
-   
+
    function bloom:setSaturation(sbase, sbloom)
       saturation_base = sbase
       saturation_bloom = sbloom
-      
+
       shaders.combine:send("basesaturation", sbase)
       shaders.combine:send("bloomsaturation", sbloom)
    end
    function bloom:getSaturation()
       return saturation_base, saturation_bloom
    end
-   
+
    function bloom:setThreshold(threshold)
       threshold_bloom = threshold
-      
+
       shaders.bloom:send("threshold", threshold)
    end
    function bloom:getThreshold()
       return threshold_bloom
    end
-   
-   
+
    -- call right before drawing the stuff you want bloomed
    function bloom:predraw()
       for k,v in pairs(self.canvas) do

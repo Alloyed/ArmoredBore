@@ -192,7 +192,7 @@ printstr = ""
 function Game:draw()
 	local me, you, camera = self.me, self.you, self.camera
 
-	-- bloom:predraw()
+	--bloom:predraw()
 
 	lg.setBackgroundColor(colors.bg)
 
@@ -204,7 +204,8 @@ function Game:draw()
 	you:draw()
 	me:draw()
 	camera:detach()
-	--[[
+
+	--[=[
 	bloom:enabledrawtobloom()
 	camera:attach()
 	bg(camera, colors.bg, colors.bg2)
@@ -214,8 +215,9 @@ function Game:draw()
 	you:draw()
 	me:draw()
 	camera:detach()
-	-- bloom:postdraw()
-	]]
+	bloom:postdraw()
+	]=]
+
 	local hw = lg.getWidth() * .5
 	gooey(you, 0, hw)
 	gooey(me, hw * 2, hw)

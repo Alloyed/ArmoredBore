@@ -145,7 +145,7 @@ function robot(player)
 	local cdown = false
 	return function()
 		local o = player.other
-		local v = Vec(-o.joyx, -o.joyy)
+		local v = Vec(player.cx-o.cx, player.cy-o.cy):normalized():rotated(2)
 		if (not cdown and o.move.name == "firing") then
 			roll()
 			cdown = true
