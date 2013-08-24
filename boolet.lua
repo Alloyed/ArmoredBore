@@ -23,8 +23,8 @@ local Boolet = Class {
 function Boolet:init(owner)
 	assert(owner)
 	self.owner = owner
-	self.x = owner.x
-	self.y = owner.y
+	self.x = owner.x + (owner.joyx * owner.w * .75)
+	self.y = owner.y + (owner.joyy * owner.w * .75)
 	bnum = bnum+1
 	self.hsh = string.format("b%d", bnum)
 	Boolets[self.hsh] = self

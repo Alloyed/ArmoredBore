@@ -67,8 +67,15 @@ function Dude:predraw()
 	self.move:predraw()
 end
 
+local canv = lg.newCanvas()
 function Dude:draw()
-	self.move:draw()
+	local dr = function() return self.move:draw() end
+	--lg.draw(canv)
+	dr()
+	local oldc = lg.getCanvas()
+	lg.setCanvas(canv)
+	dr()
+	lg.setCanvas(oldc)
 end
 
 function Dude:hurt(pain)

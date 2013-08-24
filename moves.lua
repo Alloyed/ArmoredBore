@@ -28,35 +28,47 @@ end
 local function cdraw(self, c, seg)
 	local a = self.a
 	c = c or a.colors.idle
-	lg.setColor(c)
+	lg.setLineWidth(8)
 	lg.setLineStyle('smooth')
 
+	lg.setColor(c[1], c[2], c[3], 70)
 	lg.circle('fill', a.x, a.y, a.w, seg)
+	lg.setColor(c)
 	lg.circle('line', a.x, a.y, a.w, seg)
 end
 
 function predraw(self)
 	local a = self.a
-	lg.setColor(a.colors.idle)
+	local c = a.colors.idle
 	if a.cx then
-		lg.setLineWidth(5)
+		lg.setLineWidth(2)
 		lg.setLineStyle('smooth')
+		lg.setColor(c[1], c[2], c[3], 15)
+		lg.circle('fill', a.cx, a.cy, balance.dashradius, a.segments * 1.5)
+		lg.setColor(c)
 		lg.circle('line', a.cx, a.cy, balance.dashradius, a.segments * 1.5)
 	end
 end
 
 function shapedraw(self, color)
+	lg.setLineWidth(5)
 	local a = self.a
 
 	local seg = a.segments
 	cdraw(self, color, seg)
 
-	lg.setStencil(function () return cdraw(self, {255, 255, 255}, seg) end)
 	lg.setColor(a.colors.center)
-	local sw = a.w / 4
-	local sx = a.x + a.joyx * (a.w - sw)
-	local sy = a.y + a.joyy * (a.w - sw)
+	local sw = (a.w / 4)
+	local sx = a.x + (a.joyx * (a.w * .75))
+	local sy = a.y + (a.joyy * (a.w * .75))
+	lg.setStencil(function ()
+		lg.setLineWidth(15)
+		lg.circle('line', a.x, a.y, a.w, seg)
+	end)
 	lg.circle('fill', sx, sy, sw, seg)
+
+	lg.setLineWidth(5)
+	lg.setStencil(function () lg.circle('fill', a.x, a.y, a.w, seg) end)
 	lg.circle('line', sx, sy, sw, seg)
 	lg.setStencil()
 end

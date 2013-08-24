@@ -147,7 +147,6 @@ function Game:update(dt)
 		end
 		self.timeleft = math.max(0, self.timeleft - dt)
 	end
-	-- XInput.update()
 	you:startupdate(dt)
 	me:startupdate(dt)
 
@@ -171,12 +170,14 @@ function Game:update(dt)
 end
 
 require "bloom"
-local bloom = CreateBloomEffect(.7 * lg.getWidth(), .7 * lg.getHeight())
--- local bloom = CreateBloomEffect(32, 32)
+local xx, yy = .5 * lg.getWidth(), .5 * lg.getHeight()
+-- local xx, yy= 1024, 1024
+local bloom = CreateBloomEffect(xx, yy)
 
 local bgimg = lg.newImage("check.png")
 bgimg:setWrap("repeat", "repeat")
 bgimg:setFilter('nearest', 'nearest')
+
 function bg(camera, back, fore)
 	local sq = 256
 	local bx, by = camera:worldCoords(0, 0)
@@ -193,7 +194,7 @@ printstr = ""
 function Game:draw()
 	local me, you, camera = self.me, self.you, self.camera
 
-	--bloom:predraw()
+	bloom:predraw()
 
 	lg.setBackgroundColor(colors.bg)
 
@@ -207,6 +208,7 @@ function Game:draw()
 	camera:detach()
 
 	--[=[
+	--]=]
 	bloom:enabledrawtobloom()
 	camera:attach()
 	bg(camera, colors.bg, colors.bg2)
@@ -217,7 +219,7 @@ function Game:draw()
 	me:draw()
 	camera:detach()
 	bloom:postdraw()
-	]=]
+	--]=]
 
 	local hw = lg.getWidth() * .5
 	gooey(you, 0, hw)
