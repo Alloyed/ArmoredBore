@@ -32,11 +32,13 @@ end
 
 function joypad.getStick(stick_id)
 	local jn, ax, ay = unpack( joypad.sticks[stick_id] )
+	local absx, absy = math.abs(ax), math.abs(ay)
+	local dx = ax > 0 and 1 or -1
+	local dy = ay > 0 and 1 or -1
 	return joyh.getAxis(jn, ax), joyh.getAxis(jn, ay)
 end
 
-function joypad.getTrigger(trigger_id, snap)
-	snap = snap or false -- TODO: snapping
+function joypad.getTrigger(trigger_id)
 	local jn, axis, thres = unpack( joypad.triggers[trigger_id] )
 	return joyh.getAxis(jn, axis) > thres
 end

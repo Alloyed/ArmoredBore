@@ -3,7 +3,7 @@ local json = require "misc/dkjson"
 local ls, rs = nil, nil
 local socket = require "socket"
 
-bgm = love.audio.newSource("snd/01 Airglow fires.mp3")
+bgm = love.audio.newSource("snd/bgm.mp3")
 printstr = ""
 timeleft = 0
 
@@ -78,7 +78,8 @@ local Game = Class {}
 
 function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	bgm:stop()
-	bgm:setVolume(.2)
+	bgm:setPitch(1)
+	bgm:setVolume(.1)
 	bgm:play()
 	local ywin, mwin = ywin or 0, mwin or 0
 	Boolet.reset()
