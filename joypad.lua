@@ -1,9 +1,10 @@
 local joyh = (function()
 	if string.match(love._os, "indows") then
-		ok, res = pcall(require, "XInput")
+		ok, res = pcall(require, "XInputLUA")
 		if ok then
 			return res
 		end
+		assert(nil, res)
 	end
 	return love.joystick
 end)()
@@ -35,12 +36,13 @@ function joypad.getStick(stick_id)
 	local absx, absy = math.abs(ax), math.abs(ay)
 	local dx = ax > 0 and 1 or -1
 	local dy = ay > 0 and 1 or -1
-	return joyh.getAxis(jn, ax), joyh.getAxis(jn, ay)
+	return dx * joyh.getAxis(jn, absx), dy * joyh.getAxis(jn, absy)
 end
 
 function joypad.getTrigger(trigger_id)
 	local jn, axis, thres = unpack( joypad.triggers[trigger_id] )
-	return joyh.getAxis(jn, axis) > thres
+	local absx, dx = math.abs(axis), axis > 0 and 1 or -1
+	return joyh.getAxis(jn, absx) > thres
 end
 
 function joypad.getHat(joynum, hat)

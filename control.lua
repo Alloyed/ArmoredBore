@@ -176,10 +176,10 @@ local xpad = nil
 if love._os:match("indows") then -- not a massive diff. but it bugs me
 	xpad = {
 		-- Axes
-		lx = 1, ly = -2, lt = 5,
-		rx = 3, ry = -4, rt = 6,
+		lx = 1, ly = -2, lt = -5,
+		rx = 3, ry = -4, rt = -6,
 		-- Buttons
-		lb = 5,  rb = 6,
+		lb = 7,  rb = 8,
 		ls = 11, rs = 12
 	}
 else
