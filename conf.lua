@@ -2,10 +2,10 @@ function love.conf(t)
 	t.title = "i sort of wish this was a mech game but it isn't"
 	t.identity = "mech"
 
-	--t.screen.width = 1024
-	--t.screen.height = 896
-	t.screen.width  = 900
-	t.screen.height = 500
+	t.screen.width = 1280
+	t.screen.height = 720
+	--t.screen.width  = 900
+	--t.screen.height = 500
 	t.screen.fullscreen = false
 	t.screen.vsync = true
 	t.screen.fsaa = 0

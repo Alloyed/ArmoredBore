@@ -194,6 +194,7 @@ JOYPAD(r) : right stick to move, RB to dash, RT to attack
 JOYPAD(c) : left stick to move,  RB to dash, RT to attack
 MOUSE     : mouse2 to dash, mouse1 to attack
 KEYBOARD  : arrow keys to move, x to dash, z to attack (8-way movement)
+Music is mbox by Siriusmo
 ]]
 	lg.print(cc, (lg.getWidth()/2) - 200, 10)
 	lg.print(">byzanz", 450, 400)
