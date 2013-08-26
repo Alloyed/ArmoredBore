@@ -2,12 +2,15 @@
 return {
 	margin = 210,
 
+	--room = {0, 0, 2560, 1440},
+	room = {0, 0, 1920, 1080},
+
 	bullet = {
 		speed = 15,
 		dmg = 1,
-		cost = 30,
-		rate = .05,
-		size = 8,
+		cost = 20,
+		rate = .07,
+		size = 10,
 		number = 3,
 		decay = 10 -- s
 	},

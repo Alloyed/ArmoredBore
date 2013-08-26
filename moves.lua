@@ -85,10 +85,11 @@ function Idle:update(dt)
 	local a = self.a
 	local min, max = math.min, math.max
 	-- FIXME: proper wall clamping
-	-- a.x = min(max(a.x + a.joyx, 0), lg.getWidth())
-	-- a.y = min(max(a.y + a.joyy, 0), lg.getHeight())
-	a.x = a.x + a.joyx
-	a.y = a.y + a.joyy
+	local x0, y0, x1, y1 = unpack(balance.room)
+	a.x = min(max(a.x + a.joyx, x0 + a.w), x1 - a.w)
+	a.y = min(max(a.y + a.joyy, y0 + a.w), y1 - a.w)
+	--a.x = a.x + a.joyx
+	--a.y = a.y + a.joyy
 	a.cx = a.x
 	a.cy = a.y
 end
@@ -186,8 +187,9 @@ function Roll:init(a, joyx, joyy)
 	self.a = a
 	if joyx == 0 and joyy == 0 then self.ded = true return end
 	local d = Vec(joyx, joyy):normalized() * balance.dashradius
-	self.getX = tween.tween_for(self.t, tween.pow(1), tween.range(a.x, a.x + d.x))
-	self.getY = tween.tween_for(self.t, tween.pow(1), tween.range(a.y, a.y + d.y))
+	self.vx, self.vy = (d * (1/self.t)):unpack()
+	--self.getX = tween.tween_for(self.t, tween.pow(1), tween.range(a.x, a.x + d.x))
+	--self.getY = tween.tween_for(self.t, tween.pow(1), tween.range(a.y, a.y + d.y))
 end
 
 local function atkroll(me, you)
@@ -196,27 +198,31 @@ local function atkroll(me, you)
 	return lvec.len2(you.x-me.x,you.y-me.y) < (w * w)
 end
 
-local function walls(self)
+local function walls(self, dt)
+	local x0, y0, x1, y1 = unpack(balance.room)
 	local abs = math.abs
 	local a = self.a
-	if a.x < self.vx then
-		a.x = self.vx
+	local w = a.w
+	local vx , vy = self.vx * dt, self.vy * dt
+
+	if a.x < x0 + vx + w then
+		a.x = x0 + vx + w
 		self.vx = abs(self.vx)
 	end
 
-	if a.x >= (lg.getWidth() - self.vx) then
-		a.x = (lg.getWidth() - self.vx)
-		self.vx = -self.vx
+	if a.x >= x1 - vx - w then
+		a.x = x1 - vx - w
+		self.vx = -abs(self.vx)
 	end
 
-	if a.y < self.vy then
-		a.y = self.vy
+	if a.y < y0 + vy + w then
+		a.y = y0 + vy + w
 		self.vy = abs(self.vy)
 	end
 
-	if a.y >= (lg.getHeight() - self.vy) then
-		a.y = (lg.getHeight() - self.vy)
-		self.vy = -self.vy
+	if a.y >= (y1 - vy - w) then
+		a.y = (y1 - vy - w)
+		self.vy = -abs(self.vy)
 	end
 end
 
@@ -224,14 +230,16 @@ function Roll:update(dt)
 	local a = self.a
 	if self.ded then a:popmove() return end
 	--FIXME: you can walk off the screen, properly TP to a safe spot.
-	-- walls(self)
+	walls(self, dt)
 	local o = a.other
-	a.x = self.getX()
-	a.y = self.getY()
+	a.x = a.x + self.vx * dt
+	a.y = a.y + self.vy * dt
+	--a.x = self.getX()
+	--a.y = self.getY()
 	self.t = self.t - dt
 
 	if self.t < dt then
-		a:setmove(CD, .3)
+		a:setmove(CD, .2)
 	end
 end
 

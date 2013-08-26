@@ -18,6 +18,7 @@ hfnt   = nil
 local leftscheme = nil
 local rightscheme = nil
 
+LEADER  = true
 gamewon = false
 --- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
@@ -96,7 +97,7 @@ local mtext  = {"Start game", "whoops", "whoops", "whoops", "Quit"}
 local mfn    = { function() start() end,
                  function() selectA() end,
 					  function() selectB() end,
-                 function() end, -- FIXME: stub, options menu goes here
+                 function() leaderboards() end,
                  function() love.event.push('quit') end }
 
 -- {{{ Menu
@@ -115,11 +116,17 @@ function selectB()
 	mtext[3] = "Player2 : " .. n
 end
 
+function leaderboards()
+	LEADER = not LEADER
+	mtext[4] = "Send to leaderboards: " .. (LEADER and "on" or "off")
+end
+
 function menu:enter()
 	mindex = 1
 	Aind, Bind = 0, 1
 	selectA()
 	selectB()
+	leaderboards()
 end
 
 do
@@ -164,7 +171,7 @@ function menu:keypressed(key, uni)
 		down()
 	elseif key == 'up' then
 		up()
-	elseif key == 'return' then
+	elseif key == 'return' or key == 'z' then
 		mfn[mindex]()
 	end
 end
@@ -176,10 +183,19 @@ function menu:draw()
 	lg.setColor(255, 255, 255)
 	lg.setFont(minfnt)
 	for i, text in ipairs(mtext) do
-		lg.print(text, 10, 100 + i * 20)
+		lg.print(text, 10, 300 + i * 20)
 	end
-	lg.print(">", 1, 100 + mindex * 20)
-
+	lg.print(">", 1, 300 + mindex * 20)
+	cc = [[
+## CONTROLS
+MENU      : arrow keys + enter/z to select, no controller/mouse input;_; 
+JOYPAD(l) : left stick to move,  LB to dash, LT to attack
+JOYPAD(r) : right stick to move, RB to dash, RT to attack
+JOYPAD(c) : left stick to move,  RB to dash, RT to attack
+MOUSE     : mouse2 to dash, mouse1 to attack
+KEYBOARD  : arrow keys to move, x to dash, z to attack (8-way movement)
+]]
+	lg.print(cc, (lg.getWidth()/2) - 200, 10)
 	lg.print(">byzanz", 450, 400)
 	local y = 0
 	for _, c in pairs(colors.me) do

@@ -5,7 +5,7 @@ local socket = require "socket"
 
 bgm = love.audio.newSource("snd/bgm.mp3")
 printstr = ""
-timeleft = 0
+-- timeleft = 0
 
 function gameover(game)
 	local you = game.you
@@ -20,11 +20,13 @@ function gameover(game)
 		local ss = json.encode({you = you.movebuf, me = me.movebuf})
 		lfs.write("buffa.json", ss)
 		print("replay logged at buffa.json")
-		local addr, port = "192.241.134.64", 64083
-		--local tcp, err = socket.connect(addr, port)
-		--assert(tcp, err)
-		--tcp:send(ss)
-		--tcp:close()
+		if LEADER then
+			local addr, port = "192.241.134.64", 64083
+			local tcp, err = socket.connect(addr, port)
+			assert(tcp, err)
+			tcp:send(ss)
+			tcp:close()
+		end
 		Gamestate.switch(Game(), ls, rs, you.wins, me.wins)
 	end)
 end
@@ -95,16 +97,18 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	self.isGameOver = false
 	self.camera = Camera()
 
+	local w, h = balance.room[3]*.5, balance.room[4]*.5
 	--LEF
 	local you = Dude(self)
 	you.name      = "YELLOW"
+	you.x, you.y  = w - 400, h - 400
 	you.colors    = colors.you
 	you.wins      = ywin
 	you.shoot     = youshoot
 
 	--RIGH
 	local me = Dude(self)
-	me.x, me.y = 700, 700
+	me.x, me.y   = w + 400, h + 400
 	me.name      = "BLUE"
 	me.colors    = colors.me -- lel
 	me.wins      = mwin
@@ -178,16 +182,30 @@ local bgimg = lg.newImage("check.png")
 bgimg:setWrap("repeat", "repeat")
 bgimg:setFilter('nearest', 'nearest')
 
-function bg(camera, back, fore)
+local stripe = lg.newImage("strip.png")
+stripe:setWrap("repeat", "repeat")
+stripe:setFilter('nearest', 'nearest')
+
+function bg(camera, back, fore, tl)
 	local sq = 256
 	local bx, by = camera:worldCoords(0, 0)
 	local ex, ey = camera:worldCoords(lg.getMode())
 	local dx, dy = ex - bx, ey - by
-	local q = lg.newQuad(bx, by, dx, dy, 256, 256)
+	local q  = lg.newQuad(bx, by, dx, dy, 256, 256)
+	local pq = lg.newQuad((tl * 256), 0, dx, dy, 128, 128)
+	lg.setColor(fore)
+	--lg.drawq(stripe, pq, bx, by)
 
 	lg.setColor(fore)
 	lg.setColorMode('modulate')
+	local x0, y0, x1, y1 = unpack(balance.room)
+	lg.setStencil(function()
+		lg.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
+	end)
 	lg.drawq(bgimg, q, bx, by)
+	lg.setStencil()
+	lg.setColor(colors.ui)
+	lg.rectangle('line', x0, y0, x1-x0, y1-y0)
 end
 
 printstr = ""
@@ -199,7 +217,7 @@ function Game:draw()
 	lg.setBackgroundColor(colors.bg)
 
 	camera:attach()
-	bg(camera, colors.bg, colors.bg2)
+	bg(camera, colors.bg, colors.bg2, self.timeleft)
 	you:predraw()
 	me:predraw()
 	Boolet.drawall()
@@ -211,7 +229,7 @@ function Game:draw()
 	--]=]
 	bloom:enabledrawtobloom()
 	camera:attach()
-	bg(camera, colors.bg, colors.bg2)
+	bg(camera, colors.bg, colors.bg2, self.timeleft)
 	you:predraw()
 	me:predraw()
 	Boolet.drawall()

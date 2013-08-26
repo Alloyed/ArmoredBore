@@ -15,6 +15,30 @@ local function combo(tab1, tab2)
 	return tab2
 end
 
+local Explosion = Class { name = "explosion" }
+
+function Explosion:init(bul)
+	self.hsh = bul.hsh
+	self.x, self.y = bul.x, bul.y
+
+	Timer.add(1, function() Boolets[self.hsh] = nil end)
+	local p = lg.newParticleSystem(star, 10)
+	p:setLifetime(-1)
+	p:setParticleLife(.1, .2)
+	p:setEmissionRate(60 * 10)
+	p:setSpeed(1,100)
+	p:setPosition(self.x, self.y)
+	p:start()
+	self.p = p
+end
+
+function Explosion:update(dt)
+	self.p:update(dt)
+end
+
+function Explosion:draw()
+	--lg.draw(self.p)
+end
 
 local Boolet = Class {
 	name = "bullet"
@@ -38,7 +62,7 @@ function Boolet:init(owner)
 	p:setParticleLife (.1)
 	local c = self.owner.colors.idle
 	p:setColors(c[1], c[2], c[3], 255)
-	-- p:setRadialAcceleration(.1, .5)
+	p:setRadialAcceleration(.1, .5)
 
 	self.trail = p
 end
@@ -80,12 +104,12 @@ function Boolet:update(dt, me, you)
 	self.y = self.y + self.vy
 	if self:isTouching(me) and me ~= self.owner then
 		me:hurt(balance.bullet.dmg)
-		Boolets[self.hsh] = nil
+		Boolets[self.hsh] = Explosion(self)
 	end
 
 	if self:isTouching(you) and you ~= self.owner then
 		you:hurt(balance.bullet.dmg)
-		Boolets[self.hsh] = nil
+		Boolets[self.hsh] = Explosion(self)
 	end
 
 	self.t = self.t - dt
