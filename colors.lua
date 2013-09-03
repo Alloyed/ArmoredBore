@@ -20,14 +20,16 @@ return {
 		--idle     = {web(0x0379E6)},
 		move     = {web(0x0379E6)},
 		cooldown = {web(0x47537A)},
-		center   = {web(0xDDDDDD)}
+		center   = {web(0xDDDDDD)},
+		noncenter= {web(0xBBBBBE)},
 	},
 	-- YELLO 
 	you = {
 		idle     = {web(0xFF7E00)},
 		move     = {web(0xFFC000)},
 		cooldown = {web(0x806640)},
-		center   = {web(0xDDDDDD)}
+		center   = {web(0xDDDDDD)},
+		noncenter= {web(0xBBBBBE)},
 	},
 
 	--[[

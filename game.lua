@@ -18,9 +18,9 @@ function gameover(game)
 	Timer.add(4, function()
 		printstr = ""
 		local ss = json.encode({you = you.movebuf, me = me.movebuf})
-		lfs.write("buffa.json", ss)
-		print("replay logged at buffa.json")
 		if LEADER then
+			lfs.write("buffa.json", ss)
+			print("replay logged at buffa.json")
 			local addr, port = "192.241.134.64", 64083
 			local tcp, err = socket.connect(addr, port)
 			assert(tcp, err)
@@ -120,17 +120,29 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	leftscheme(you)
 	rightscheme(me)
 	self.me, self.you = me, you
-	self.timeleft = 10 * 60
+	self.timeleft = 400 -- 40
 
 	do
 		local count = balance.initialcountdown
 		printstr = string.format("%d", count)
-
-		for i = 1, count do
-			Timer.add(i, function() printstr = string.format("%d", count-i) end)
+		local cdsnd, gosnd =
+			love.audio.newSource "snd/cd.wav", love.audio.newSource "snd/go.wav"
+		cdsnd:play()
+		for i = 1, count - 1 do
+			Timer.add(i, function()
+				printstr = string.format("%d", count-i)
+				cdsnd:stop()
+				cdsnd:play()
+			end)
 		end
-		Timer.add(count+.01, function() printstr = "GO" self.started = true end)
-		Timer.add(count+  1, function() printstr = "" end)
+		Timer.add(count, function()
+			printstr = "GO"
+			self.started = true
+			gosnd:play()
+		end)
+		Timer.add(count + 1, function()
+			printstr = ""
+		end)
 	end
 
 	Signals.clear("gamelost")
@@ -211,8 +223,9 @@ end
 printstr = ""
 function Game:draw()
 	local me, you, camera = self.me, self.you, self.camera
-
-	bloom:predraw()
+	if BLOOM then
+		bloom:predraw()
+	end
 
 	lg.setBackgroundColor(colors.bg)
 
@@ -227,16 +240,18 @@ function Game:draw()
 
 	--[=[
 	--]=]
-	bloom:enabledrawtobloom()
-	camera:attach()
-	bg(camera, colors.bg, colors.bg2, self.timeleft)
-	you:predraw()
-	me:predraw()
-	Boolet.drawall()
-	you:draw()
-	me:draw()
-	camera:detach()
-	bloom:postdraw()
+	if BLOOM then
+		bloom:enabledrawtobloom()
+		camera:attach()
+		bg(camera, colors.bg, colors.bg2, self.timeleft)
+		you:predraw()
+		me:predraw()
+		Boolet.drawall()
+		you:draw()
+		me:draw()
+		camera:detach()
+		bloom:postdraw()
+	end
 	--]=]
 
 	local hw = lg.getWidth() * .5

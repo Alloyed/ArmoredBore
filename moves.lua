@@ -57,7 +57,12 @@ function shapedraw(self, color)
 	local seg = a.segments
 	cdraw(self, color, seg)
 
-	lg.setColor(a.colors.center)
+	if math.abs(a.joyx) < .01 and math.abs(a.joyy) < .01 then
+		lg.setColor(a.colors.noncenter)
+	else
+		lg.setColor(a.colors.center)
+	end
+
 	local sw = (a.w / 4)
 	local sx = a.x + (a.joyx * (a.w * .75))
 	local sy = a.y + (a.joyy * (a.w * .75))
@@ -190,6 +195,8 @@ function Roll:init(a, joyx, joyy)
 	self.vx, self.vy = (d * (1/self.t)):unpack()
 	--self.getX = tween.tween_for(self.t, tween.pow(1), tween.range(a.x, a.x + d.x))
 	--self.getY = tween.tween_for(self.t, tween.pow(1), tween.range(a.y, a.y + d.y))
+	self.buzz = love.audio.newSource('snd/dash.wav')
+	self.buzz:play()
 end
 
 local function atkroll(me, you)
@@ -247,6 +254,11 @@ Roll.predraw = predraw
 
 function Roll:draw()
 	shapedraw(self, self.a.colors.move)
+end
+
+function Roll:dispose()
+	self.buzz:stop()
+	--print("dis")
 end
 
 return { idle = Idle, roll = Roll, cooldown = CD, fire = Firing }

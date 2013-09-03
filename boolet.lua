@@ -22,22 +22,12 @@ function Explosion:init(bul)
 	self.x, self.y = bul.x, bul.y
 
 	Timer.add(1, function() Boolets[self.hsh] = nil end)
-	local p = lg.newParticleSystem(star, 10)
-	p:setLifetime(-1)
-	p:setParticleLife(.1, .2)
-	p:setEmissionRate(60 * 10)
-	p:setSpeed(1,100)
-	p:setPosition(self.x, self.y)
-	p:start()
-	self.p = p
 end
 
 function Explosion:update(dt)
-	self.p:update(dt)
 end
 
 function Explosion:draw()
-	--lg.draw(self.p)
 end
 
 local Boolet = Class {
@@ -53,18 +43,6 @@ function Boolet:init(owner)
 	self.hsh = string.format("b%d", bnum)
 	Boolets[self.hsh] = self
 	self.t = balance.bullet.decay
-
-	local p = love.graphics.newParticleSystem(star, 256)
-
-	p:setEmissionRate (60)
-	p:setLifetime (-1)
-	p:setSizes (.1)
-	p:setParticleLife (.1)
-	local c = self.owner.colors.idle
-	p:setColors(c[1], c[2], c[3], 255)
-	p:setRadialAcceleration(.1, .5)
-
-	self.trail = p
 end
 
 
@@ -92,11 +70,6 @@ function Boolet:point(xx, yy)
 	local s = balance.bullet.speed
 	self.vx = vx*s
 	self.vy = vy*s
-	self.trail:setDirection(math.atan2(xx,yy))
-	self.trail:setSpeed(s, s+.1)
-	self.trail:setSpread(.01)
-	self.trail:stop()
-	self.trail:start()
 end
 
 function Boolet:update(dt, me, you)
@@ -116,20 +89,15 @@ function Boolet:update(dt, me, you)
 	if self.t < dt then
 		Boolets[self.hsh] = nil
 	end
-
-	self.trail:update(dt)
-	self.trail:setPosition(self.x, self.y)
 end
 
 function Boolet:isTouching(dude)
-	assert(dude.w)
 	return lvec.len2(self.x - dude.x, self.y - dude.y) <
 	  (dude.w * dude.w + balance.bullet.size * balance.bullet.size)
 end
 
 function Boolet:draw()
 	local rc = self.owner.colors.idle
-	--lg.draw(self.trail)
 	lg.setColor(rc)
 	lg.circle('fill', self.x, self.y, balance.bullet.size)
 end

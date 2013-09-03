@@ -9,7 +9,7 @@ return {
 		speed = 15,
 		dmg = 1,
 		cost = 20,
-		rate = .07,
+		rate = .08,
 		size = 10,
 		number = 3,
 		decay = 10 -- s

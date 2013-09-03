@@ -138,20 +138,26 @@ function kbupdate(player)
 	end
 end
 
+local function rtime()
+	return math.random() * .4 + .9
+end
+
 function robot(player)
 	local roll  = makeroll(player)
 	local shoot = shootat(player)
-	Timer.addPeriodic(1.3, shoot)
-	local cdown = false
+	Timer.add(rtime(), function(fn) shoot() Timer.add(rtime(), fn) end)
+	local dir = 1
+	local joy = Vec(0, 0)
 	return function()
 		local o = player.other
-		local v = Vec(player.cx-o.cx, player.cy-o.cy):normalized():rotated(2)
-		if (not cdown and o.move.name == "firing") then
+		local v = Vec(player.cx-o.cx, player.cy-o.cy):normalized():rotated(dir * math.pi/1.8)
+		if (o.move.name == "firing" and player.move.name == "idle") then
 			roll()
-			cdown = true
-			Timer.add(2, function() cdown = false end)
+			if math.random() > .75 then dir = dir * -1 end
 		end
-		apply(player, v.x, v.y)
+		local n = .3
+		joy = (joy * (1 - n)) + (v * n)
+		apply(player, joy.x, joy.y)
 	end
 end
 

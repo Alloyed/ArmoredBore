@@ -1,5 +1,20 @@
 --libs/utilities
--- XInput = require('XInputLUA') --TODO: selectively disable
+--[[
+local ren = require "misc.renoise"
+ren.load()
+
+local tab = {}
+tab['snd/bgm.mp3']  = {16, -1}
+tab['snd/beep.wav'] = {2, 2}
+tab['snd/me.wav']   = {0, 0}
+tab['snd/you.wav']  = {1, 1}
+tab['snd/dash.wav'] = {3, 3}
+tab['snd/cd.wav']   = {4, 4}
+tab['snd/go.wav']   = {5, 4}
+ren.sounds(tab)
+love.audio = ren
+--]]
+
 require "boilerplate"
 local dump = require "dump"
 --our own things
@@ -19,7 +34,10 @@ local leftscheme = nil
 local rightscheme = nil
 
 LEADER  = true
+BLOOM   = false
 gamewon = false
+
+
 --- XXX PLEASE STOP LOOKING THIS ENTIRE FILE IS BAD XXX
 -- as if the globals weren't hint enough
 
@@ -28,11 +46,9 @@ menu = {}
 function love.load()
 	love.keyboard.setKeyRepeat(.150, .050)
 
-	minfnt = lg.newFont('VeraMono.ttf', 15)
-	fnt    = lg.newFont('VeraMono.ttf', 20)
-	hfnt   = lg.newFont('VeraMono.ttf', 50)
-
-	star = lg.newImage("star.png")
+	minfnt = lg.newFont('font/Sansation_Regular.ttf', 15)
+	fnt    = lg.newFont('font/Sansation_Regular.ttf', 20)
+	hfnt   = lg.newFont('font/Sansation_Bold.ttf', 45)
 
 	local all_callbacks = {
 	'update', 'draw', 'focus', 'keypressed', 'keyreleased',
@@ -41,12 +57,6 @@ function love.load()
 	Gamestate.registerEvents(all_callbacks)
 	Gamestate.switch(menu)
 end
-
---XInputlua only overrides the love function
---function love.joystickpressed(joy, btn)
-	-- print(joy, btn)
---	control.joystickdo(joy, btn, false)
---end
 
 schemes = {}
 
@@ -93,11 +103,12 @@ table.insert(schemes, function()
 end)
 
 local mindex = 1
-local mtext  = {"Start game", "whoops", "whoops", "whoops", "Quit"}
+local mtext  = {"Start game", "SELECTA", "SELECTB", "LDR", "BLOOM", "Quit"}
 local mfn    = { function() start() end,
                  function() selectA() end,
 					  function() selectB() end,
                  function() leaderboards() end,
+					  function() setBloom() end,
                  function() love.event.push('quit') end }
 
 -- {{{ Menu
@@ -121,12 +132,18 @@ function leaderboards()
 	mtext[4] = "Send to leaderboards: " .. (LEADER and "on" or "off")
 end
 
+function setBloom()
+	BLOOM = not BLOOM
+	mtext[5] = "use Bloom: " .. (BLOOM and "on" or "off")
+end
+
 function menu:enter()
 	mindex = 1
 	Aind, Bind = 0, 1
 	selectA()
 	selectB()
 	leaderboards()
+	setBloom()
 end
 
 do
