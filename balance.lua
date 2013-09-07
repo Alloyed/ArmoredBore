@@ -8,22 +8,24 @@ return {
 	bullet = {
 		speed = 15,
 		dmg = 1,
-		cost = 20,
+		cost = 1,
 		rate = .08,
 		size = 10,
 		number = 3,
 		decay = 10 -- s
 	},
 
-	maxammo = 180,
-	rolldmg = 15,
-	fireCD = .01,
+	maxammo     = 9,
+	reloadspeed = .3,
+	rolldmg     = 15,
+	fireCD      = .01,
 
-	dashradius = 200,
-	dashCD = 0, -- unimplemented
+	dashradius  = 200,
+	dashCD      = 0, -- unimplemented
 
 	health = 15, -- initial health that is
 	iframes = false, -- unimplemented
 	initialcountdown = 3, -- The countdown timer at the beginning of the game
-	vidya = "video game"
+	roundtime = 60, -- seconds
+	vidya = "video game",
 }

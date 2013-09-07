@@ -51,18 +51,23 @@ function gooey(self, bx, ex)
 	local hpbar_w = size
 	local hpleft = (self.hp / balance.health) * hpbar_h
 
+	-- HPbar bg
+	lg.setColor(self.colors.cooldown)
+	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpbar_h)
+
+	-- Actual HPbar
+	lg.setColor(self.colors.idle)
+	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
+
 	-- notches in HPbar
 	lg.setLineWidth(1)
-	lg.setColor(colors.fg)
+	lg.setColor(self.colors.move)
 	local y = 0
 	while y < hpbar_h do
 		lg.line(bx, y, bx + (hpbar_w*dw), y)
 		y = y + hpbar_w
 	end
 
-	-- Actual HPbar
-	lg.setColor(self.colors.idle)
-	lg.rectangle('fill', bx, 0, hpbar_w * dw, hpleft)
 
 	-- ammo bar
 	if self.ammo > balance.bullet.cost * balance.bullet.number then
@@ -120,7 +125,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	leftscheme(you)
 	rightscheme(me)
 	self.me, self.you = me, you
-	self.timeleft = 400 -- 40
+	self.timeleft = balance.roundtime
 
 	do
 		local count = balance.initialcountdown
@@ -157,12 +162,24 @@ end
 
 function Game:update(dt)
 	local me, you, camera = self.me, self.you, self.camera
+	-- Round timer
 	if self.started then
 		if self.timeleft <= 0 and not self.isGameOver then
 			Signals.emit("gamedraw", self)
 		end
 		self.timeleft = math.max(0, self.timeleft - dt)
 	end
+	-- Camera
+	local x = .5 * (me.x + you.x)
+	local y = .5 * (me.y + you.y)
+	camera:lookAt(x, y)
+
+	local pad = balance.margin * 2
+	local zx  = lg.getWidth()  / (pad + math.abs(me.x - you.x))
+	local zy  = lg.getHeight() / (pad + math.abs(me.y - you.y))
+	local zum = math.min(math.min(zx, zy), 1)
+	camera:zoomTo(zum)
+
 	you:startupdate(dt)
 	me:startupdate(dt)
 
@@ -173,16 +190,6 @@ function Game:update(dt)
 	me:update(dt)
 
 	Boolet.updateall(dt, me, you)
-
-	local x = .5 * (me.x + you.x)
-	local y = .5 * (me.y + you.y)
-	camera:lookAt(x, y)
-
-	local pad = balance.margin * 2
-	local zx  = lg.getWidth()  / (pad + math.abs(me.x - you.x))
-	local zy  = lg.getHeight() / (pad + math.abs(me.y - you.y))
-	local zum = math.min(math.min(zx, zy), 1)
-	camera:zoomTo(zum)
 end
 
 require "bloom"
@@ -238,8 +245,6 @@ function Game:draw()
 	me:draw()
 	camera:detach()
 
-	--[=[
-	--]=]
 	if BLOOM then
 		bloom:enabledrawtobloom()
 		camera:attach()
@@ -252,7 +257,6 @@ function Game:draw()
 		camera:detach()
 		bloom:postdraw()
 	end
-	--]=]
 
 	local hw = lg.getWidth() * .5
 	gooey(you, 0, hw)

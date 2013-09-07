@@ -78,11 +78,15 @@ function Boolet:update(dt, me, you)
 	if self:isTouching(me) and me ~= self.owner then
 		me:hurt(balance.bullet.dmg)
 		Boolets[self.hsh] = Explosion(self)
+		local rnd = function() return (math.random() - .5) * 16 end
+		Timer.do_for(.032, function() me.game.camera:move(rnd(), rnd()) end)
 	end
 
 	if self:isTouching(you) and you ~= self.owner then
 		you:hurt(balance.bullet.dmg)
 		Boolets[self.hsh] = Explosion(self)
+		local rnd = function() return (math.random() - .5) * 16 end
+		Timer.do_for(.032, function() me.game.camera:move(rnd(), rnd()) end)
 	end
 
 	self.t = self.t - dt
@@ -100,6 +104,9 @@ function Boolet:draw()
 	local rc = self.owner.colors.idle
 	lg.setColor(rc)
 	lg.circle('fill', self.x, self.y, balance.bullet.size)
+	lg.setLineWidth(2)
+	lg.setColor(self.owner.colors.move)
+	lg.circle('line', self.x, self.y, balance.bullet.size)
 end
 
 return Boolet

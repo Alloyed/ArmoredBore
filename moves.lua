@@ -97,6 +97,7 @@ function Idle:update(dt)
 	--a.y = a.y + a.joyy
 	a.cx = a.x
 	a.cy = a.y
+	a.reload:update(dt)
 end
 
 Idle.predraw = predraw
@@ -121,6 +122,7 @@ end
 
 function CD:update(dt)
 	self.a.cx, self.a.cy = self.a.x, self.a.y
+	self.a.reload:update(dt)
 end
 
 CD.predraw = predraw
@@ -138,14 +140,26 @@ local Firing = Class { name = "firing", priority = 3}
 function Firing:init(a, t)
 	assert(a)
 	local atype = balance.bullet
-	self.t  = atype.rate * atype.number
+	self.t  = atype.rate * atype.number * 1.1
 	self.st = atype.rate
 	self.a = a
-	self.beep = nil
+	local mgun = Timer.new()
+	mgun:addPeriodic(atype.rate, function() self:fire() end, atype.number)
+	self.mgun = mgun
+end
+
+function Firing:fire()
+		local me, you, atype = self.a, self.a.other, balance.bullet
+		if me.ammo < atype.cost then return end
+		local snd = love.audio.newSource("snd/me.wav")
+		snd:play()
+		me.ammo = me.ammo - atype.cost
+		local b = Boolet(self.a)
+		-- TODO: proper targeting
+		b:point(you.x - me.x, you.y - me.y)
 end
 
 function Firing:update(dt)
-
 	self.t = self.t - dt
 	self.st = self.st - dt
 
@@ -154,16 +168,11 @@ function Firing:update(dt)
 	local atype = balance.bullet
 
 	if self.st < dt then
-		if me.ammo > atype.cost then
-			local snd = love.audio.newSource("snd/me.wav")
-			snd:play()
-			me.ammo = me.ammo - atype.cost
-			local b = Boolet(self.a)
-			-- TODO: proper targeting
-			b:point(you.x - me.x, you.y - me.y)
-		end
+		--self:fire()
 		self.st = atype.rate
 	end
+
+	self.mgun:update(dt)
 
 	if self.t < dt then
 		self.a:setmove(CD, balance.fireCD)
@@ -248,6 +257,7 @@ function Roll:update(dt)
 	if self.t < dt then
 		a:setmove(CD, .2)
 	end
+	self.a.reload:update(dt)
 end
 
 Roll.predraw = predraw
@@ -257,7 +267,9 @@ function Roll:draw()
 end
 
 function Roll:dispose()
-	self.buzz:stop()
+	if self.buzz then
+		self.buzz:stop()
+	end
 	--print("dis")
 end
 

@@ -4,19 +4,23 @@ local Ring  = require "hump.ringbuffer"
 local Dude = Class {
 	name = "dude",
 	function(self, game)
-		assert(game)
-		self.game = game
-		self.x  = 100
-		self.y  = 100
-		self.cx = 100
-		self.cy = 100
-		self.w  = 50 -- radius
+		assert(game, "Dude has nogaem")
+		self.game     = game
+		self.x        = 100
+		self.y        = 100
+		self.cx       = 100
+		self.cy       = 100
+		self.w        = 50 -- radius
 		self.segments = 33
 
-		self.joyx = 0
-		self.joyy = 0
-		self.hp = balance.health
-		self.ammo = 0
+		self.joyx   = 0
+		self.joyy   = 0
+		self.hp     = balance.health
+		self.ammo   = 0
+		self.reload = Timer.new()
+		self.reload:addPeriodic(balance.reloadspeed, function()
+			self.ammo = math.min(self.ammo + 1, balance.maxammo)
+		end)
 
 		self.move = moves.cooldown(self, balance.initialcountdown)
 		self.boolets = {}
@@ -59,7 +63,6 @@ function Dude:startupdate(dt)
 end
 
 function Dude:update(dt)
-	self.ammo = math.min(self.ammo + 1, balance.maxammo)
 	self.move:update(dt)
 end
 

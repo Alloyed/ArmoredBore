@@ -17,6 +17,7 @@ love.audio = ren
 
 require "boilerplate"
 local dump = require "dump"
+local qu   = require "Quickie"
 --our own things
 balance = require "balance"
 colors  = require "colors"
@@ -25,6 +26,7 @@ moves   = require "moves"
 control = require "control"
 Dude    = require "player"
 Game    = require "game"
+CharacterSelect = require "charselect"
 
 minfnt = nil
 fnt    = nil
@@ -58,186 +60,60 @@ function love.load()
 	Gamestate.switch(menu)
 end
 
-schemes = {}
-
-for i=1, ljoy.getNumJoysticks() do
-	table.insert(schemes, function()
-		return function(pl)
-				return control.schemes.joypad(pl, 'l', 'l', i)
-		end, "Controller " .. i .. "(left)"
-	end)
-	table.insert(schemes, function()
-		return function(pl)
-			return control.schemes.joypad(pl, 'r', 'r', i)
- 		end, "Controller " .. i .. "(right)"
-	end)
-	table.insert(schemes, function()
-		return function(pl)
-			return control.schemes.joypad(pl, 'l', 'r', i)
-		end, "Controller " .. i .. "(full)"
-	end)
-end
-
-table.insert(schemes, function()
-	return control.schemes.moose, "Mouse (lel)"
-end)
-
-table.insert(schemes, function()
-	return control.schemes.what, "AI"
-end)
-
-table.insert(schemes, function()
-	return function(pl)
-		return control.schemes.replay(pl, "you")
-	end, "Replay as Player 1"
-end)
-
-table.insert(schemes, function()
-	return function(pl)
-		return control.schemes.replay(pl, "me")
-	end, "Replay as Player 2"
-end)
-
-table.insert(schemes, function()
-	return control.schemes.numpad, "Keyboard (fag)"
-end)
 
 local mindex = 1
-local mtext  = {"Start game", "SELECTA", "SELECTB", "LDR", "BLOOM", "Quit"}
+local mtext  = {"Start game", "LDR", "BLOOM", "Quit"}
 local mfn    = { function() start() end,
-                 function() selectA() end,
-					  function() selectB() end,
                  function() leaderboards() end,
 					  function() setBloom() end,
                  function() love.event.push('quit') end }
 
 -- {{{ Menu
-local Aind, Bind = 0, 1
-function selectA()
-	Aind = (Aind % #schemes) + 1
-	local tmp, n = schemes[Aind]()
-	leftscheme = tmp
-	mtext[2] = "Player1 : " .. n
-end
-
-function selectB()
-	Bind = (Bind % #schemes) + 1
-	local tmp, n = schemes[Bind]()
-	rightscheme = tmp
-	mtext[3] = "Player2 : " .. n
-end
-
 function leaderboards()
 	LEADER = not LEADER
-	mtext[4] = "Send to leaderboards: " .. (LEADER and "on" or "off")
+	mtext[2] = "Send to leaderboards: " .. (LEADER and "on" or "off")
 end
 
 function setBloom()
 	BLOOM = not BLOOM
-	mtext[5] = "use Bloom: " .. (BLOOM and "on" or "off")
+	mtext[3] = "use Bloom: " .. (BLOOM and "on" or "off")
 end
 
 function menu:enter()
 	mindex = 1
-	Aind, Bind = 0, 1
-	selectA()
-	selectB()
 	leaderboards()
 	setBloom()
 end
 
-do
--- FIXME: imperative ugliness
-local t = .25
-local function add(dt)
-	t = t + dt
-end
-
-local function up()
-		-- TODO: you might notice this is dumb
-		mindex = (mindex - 2 % #mtext) + 1
-		mindex = (mindex - 2 % #mtext) + 1
-		mindex = (mindex % #mtext) + 1
-end
-
-local function down()
-		mindex = (mindex % #mtext) + 1
-end
-
 function menu:update(dt)
-	local hat = ljoy.getHat(1, 1)
-	if (string.match(hat, 'd')) then
-		add(dt)
-		if t > .25 then
-			t = t - .25
-			down()
+	qu.group.push {grow = 'down', pos = {10, 10}, size = {800, 040}, align = 'center'}
+		for i, txt in ipairs(mtext) do
+			if qu.Button{text = txt, size = {'tight'}} then
+				mfn[i]()
+			end
 		end
-	elseif (string.match(hat, 'u')) then
-		add(dt)
-		if t > .25 then
-			t = t - .25
-			up()
-		end
-	else
-		t = .25
-	end
+	qu.group.pop {}
 end
 
 function menu:keypressed(key, uni)
-	if key == 'down' then
-		down()
-	elseif key == 'up' then
-		up()
-	elseif key == 'return' or key == 'z' then
-		mfn[mindex]()
-	end
+	qu.keyboard.pressed(key, uni)
 end
 
-end
-
+cc = [[
+Suck my dick I'm a shark
+I don't even need a massive controls list anymore :D
+]]
 function menu:draw()
 	lg.setBackgroundColor(0, 0, 0)
 	lg.setColor(255, 255, 255)
 	lg.setFont(minfnt)
-	for i, text in ipairs(mtext) do
-		lg.print(text, 10, 300 + i * 20)
-	end
-	lg.print(">", 1, 300 + mindex * 20)
-	cc = [[
-## CONTROLS
-MENU      : arrow keys + enter/z to select, no controller/mouse input;_; 
-JOYPAD(l) : left stick to move,  LB to dash, LT to attack
-JOYPAD(r) : right stick to move, RB to dash, RT to attack
-JOYPAD(c) : left stick to move,  RB to dash, RT to attack
-MOUSE     : mouse2 to dash, mouse1 to attack
-KEYBOARD  : arrow keys to move, x to dash, z to attack (8-way movement)
-Music is mbox by Siriusmo
-]]
-	lg.print(cc, (lg.getWidth()/2) - 200, 10)
-	lg.print(">byzanz", 450, 400)
-	local y = 0
-	for _, c in pairs(colors.me) do
-		lg.setColor(c)
-		lg.rectangle('fill', 400, 400 + y, 10, 10)
-		y = y + 10
-	end
-
-	for _, c in pairs(colors.you) do
-		lg.setColor(c)
-		lg.rectangle('fill', 400, 400 + y, 10, 10)
-		y = y + 10
-	end
-
-	lg.setColor(colors.ui)
-	lg.rectangle('fill', 400, 400 + y, 10, 10)
-	y = y + 10
-	lg.setColor(colors.bg)
-	lg.rectangle('fill', 400, 400 + y, 10, 10)
+	qu.core.draw()
+	lg.print(cc, 200, 10)
 end
 -- }}}
 
 function start()
-	Gamestate.switch(Game(), leftscheme, rightscheme)
+	Gamestate.switch(CharacterSelect())
 end
 
 function printf(fmt, ...)
