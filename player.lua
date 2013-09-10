@@ -1,33 +1,33 @@
-local moves = require "moves"
+local imoves = require "moves"
 local Ring  = require "hump.ringbuffer"
 
-local Dude = Class {
-	name = "dude",
-	function(self, game)
+local Dude = Class { }
+Dude.moves = setmetatable ( {}, {__index = imoves} )
+
+function Dude:init(game)
 		assert(game, "Dude has nogaem")
 		self.game     = game
 		self.x        = 100
 		self.y        = 100
 		self.cx       = 100
 		self.cy       = 100
+		self.joyx     = 0
+		self.joyy     = 0
+
 		self.w        = 50 -- radius
 		self.segments = 33
-
-		self.joyx   = 0
-		self.joyy   = 0
-		self.hp     = balance.health
-		self.ammo   = 0
-		self.reload = Timer.new()
+		self.hp       = balance.health
+		self.ammo     = 0
+		self.reload   = Timer.new()
 		self.reload:addPeriodic(balance.reloadspeed, function()
 			self.ammo = math.min(self.ammo + 1, balance.maxammo)
 		end)
-
-		self.move = moves.cooldown(self, balance.initialcountdown)
+		local cd = moves.cooldown
+		self.move = cd(self, balance.initialcountdown)
 		self.boolets = {}
 		self.bnum = 0
 		self.movebuf = {}
-	end
-}
+end
 
 function Dude:setmove(newmove, ...)
 	if self.move and self.move.dispose then self.move:dispose() end
@@ -52,7 +52,7 @@ function Dude:popmove()
 	if self.rq then
 		self:setmove(self.rq[1], unpack(self.rq[2]))
 	else
-		self:setmove(moves.idle)
+		self:setmove(self.moves.idle)
 	end
 	self.rq = nil
 	return self.move

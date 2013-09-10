@@ -12,8 +12,10 @@ return {
 		rate = .08,
 		size = 10,
 		number = 3,
-		decay = 10 -- s
+		decay = 4, -- s
 	},
+
+	powerupsize = 40,
 
 	maxammo     = 9,
 	reloadspeed = .3,

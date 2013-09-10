@@ -70,9 +70,7 @@ end)
 
 local left  = {schemes[1]()}
 local right = {schemes[2]()}
-left[3] = "LEFT STICK to move, LB to dodge, LT to fire"
 left[4] = "Player 1 (YELLOW)"
-right[3] = "RIGHT STICK to move, RB to dodge, RT to fire"
 right[4] = "Player 2 (BLUE)"
 
 local function side(side, align)

@@ -42,6 +42,15 @@ function Boolet:init(owner)
 	bnum = bnum+1
 	self.hsh = string.format("b%d", bnum)
 	Boolets[self.hsh] = self
+	self.timer = Timer.new()
+	self.live = true
+	Timer.add(.6, function()
+		self.live = false
+	end)
+
+	Timer.add(balance.bullet.decay, function()
+		Boolets[self.hsh] = nil
+	end)
 	self.t = balance.bullet.decay
 end
 
@@ -72,27 +81,35 @@ function Boolet:point(xx, yy)
 	self.vy = vy*s
 end
 
+function Boolet:reflectAcross(n)
+	n= -n:normalized()
+	self.x, self.y = self.x - (self.vx*1.3), self.y - (self.vy*1.3)
+	local v = Vec(self.vx, self.vy)
+	v = v - (2 * (v * n)) * n
+	self.vx, self.vy = v:unpack()
+end
+
 function Boolet:update(dt, me, you)
 	self.x = self.x + self.vx
 	self.y = self.y + self.vy
-	if self:isTouching(me) and me ~= self.owner then
-		me:hurt(balance.bullet.dmg)
-		Boolets[self.hsh] = Explosion(self)
-		local rnd = function() return (math.random() - .5) * 16 end
-		Timer.do_for(.032, function() me.game.camera:move(rnd(), rnd()) end)
+	local players = {me, you}
+	for _, player in ipairs(players) do
+		if self:isTouching(player) and player ~= self.owner and not self.bumped then
+			if not self.live then
+				self:reflectAcross(Vec(math.abs(self.x - player.x),
+				                       math.abs(self.y - player.y)))
+				self.bumped = true
+			else
+				player:hurt(balance.bullet.dmg)
+				Boolets[self.hsh] = Explosion(self)
+				local rnd = function() return (math.random() - .5) * 16 end
+				Timer.do_for(.032, function()
+					me.game.camera:move(rnd(), rnd())
+				end)
+			end
+		end
 	end
-
-	if self:isTouching(you) and you ~= self.owner then
-		you:hurt(balance.bullet.dmg)
-		Boolets[self.hsh] = Explosion(self)
-		local rnd = function() return (math.random() - .5) * 16 end
-		Timer.do_for(.032, function() me.game.camera:move(rnd(), rnd()) end)
-	end
-
-	self.t = self.t - dt
-	if self.t < dt then
-		Boolets[self.hsh] = nil
-	end
+	self.timer:update(dt)
 end
 
 function Boolet:isTouching(dude)
@@ -101,12 +118,17 @@ function Boolet:isTouching(dude)
 end
 
 function Boolet:draw()
-	local rc = self.owner.colors.idle
+	local rc
+	if self.live then
+		rc = self.owner.colors.move
+	else
+		rc = self.owner.colors.cooldown
+	end
 	lg.setColor(rc)
 	lg.circle('fill', self.x, self.y, balance.bullet.size)
 	lg.setLineWidth(2)
 	lg.setColor(self.owner.colors.move)
-	lg.circle('line', self.x, self.y, balance.bullet.size)
+	--lg.circle('line', self.x, self.y, balance.bullet.size)
 end
 
 return Boolet

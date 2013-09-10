@@ -1,10 +1,10 @@
-local tween = require "tween"
-local json = require "misc/dkjson"
+local tween  = require "tween"
+local json   = require "misc/dkjson"
 local ls, rs = nil, nil
 local socket = require "socket"
 
-bgm = love.audio.newSource("snd/bgm.mp3")
-printstr = ""
+bgm         = love.audio.newSource("snd/bgm.mp3")
+printstr    = ""
 -- timeleft = 0
 
 function gameover(game)
@@ -86,11 +86,11 @@ local Game = Class {}
 function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	bgm:stop()
 	bgm:setPitch(1)
-	bgm:setVolume(.1)
+	bgm:setVolume(.25)
 	bgm:play()
+
 	local ywin, mwin = ywin or 0, mwin or 0
-	Boolet.reset()
-	control.reset()
+
 	Timer.clear()
 	Timer.addPeriodic(.5, function()
 		local fine, cl, bl = pcall(function()
@@ -99,6 +99,9 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 		end)
 		if fine then colors, balance = cl, bl end
 	end)
+
+	Boolet.reset()
+	control.reset()
 	self.isGameOver = false
 	self.camera = Camera()
 
@@ -112,7 +115,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	you.shoot     = youshoot
 
 	--RIGH
-	local me = Dude(self)
+	local me = Shotgonner(self)
 	me.x, me.y   = w + 400, h + 400
 	me.name      = "BLUE"
 	me.colors    = colors.me -- lel
@@ -140,6 +143,11 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 				cdsnd:play()
 			end)
 		end
+
+		Timer.add(count-1, function()
+				Powerup.reset(self)
+		end)
+
 		Timer.add(count, function()
 			printstr = "GO"
 			self.started = true
@@ -190,6 +198,7 @@ function Game:update(dt)
 	me:update(dt)
 
 	Boolet.updateall(dt, me, you)
+	Powerup.updateall(dt)
 end
 
 require "bloom"
@@ -235,26 +244,22 @@ function Game:draw()
 	end
 
 	lg.setBackgroundColor(colors.bg)
-
-	camera:attach()
-	bg(camera, colors.bg, colors.bg2, self.timeleft)
-	you:predraw()
-	me:predraw()
-	Boolet.drawall()
-	you:draw()
-	me:draw()
-	camera:detach()
-
-	if BLOOM then
-		bloom:enabledrawtobloom()
+	local function draw()
 		camera:attach()
 		bg(camera, colors.bg, colors.bg2, self.timeleft)
 		you:predraw()
 		me:predraw()
 		Boolet.drawall()
+		Powerup.drawall()
 		you:draw()
 		me:draw()
 		camera:detach()
+	end
+
+	draw()
+	if BLOOM then
+		bloom:enabledrawtobloom()
+		draw()
 		bloom:postdraw()
 	end
 

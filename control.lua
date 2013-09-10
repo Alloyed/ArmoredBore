@@ -9,9 +9,6 @@ local updatefn = {}
 
 function reset()
 	joypad.init()
-	local cb = {}
-	function cb.buttonpressed()
-	end
 	joypad.setCallbacks({buttonpressed = joystickdo, triggeron = triggerdo})
 	functions = {}
 	updatefn = {}
@@ -72,14 +69,14 @@ end
 function makeroll(dude)
 	return function()
 		dude.movebuf[#dude.movebuf].roll = true
-		dude:pushmove(moves.roll, dude.joyx, dude.joyy)
+		dude:pushmove(dude.moves.roll, dude.joyx, dude.joyy)
 	end
 end
 
 function shootat(dude)
 	return function()
 		dude.movebuf[#dude.movebuf].shoot = true
-		dude:pushmove(moves.fire)
+		dude:pushmove(dude.moves.fire)
 	end
 end
 

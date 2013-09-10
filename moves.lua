@@ -161,21 +161,15 @@ end
 
 function Firing:update(dt)
 	self.t = self.t - dt
-	self.st = self.st - dt
 
 	local me = self.a
 	local you = self.a.other
 	local atype = balance.bullet
 
-	if self.st < dt then
-		--self:fire()
-		self.st = atype.rate
-	end
-
 	self.mgun:update(dt)
 
 	if self.t < dt then
-		self.a:setmove(CD, balance.fireCD)
+		self.a:setmove(self.a.moves.cooldown, balance.fireCD)
 	end
 end
 
@@ -255,7 +249,7 @@ function Roll:update(dt)
 	self.t = self.t - dt
 
 	if self.t < dt then
-		a:setmove(CD, .2)
+		a:setmove(a.moves.cooldown, .2)
 	end
 	self.a.reload:update(dt)
 end
