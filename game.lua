@@ -3,9 +3,9 @@ local json   = require "misc/dkjson"
 local ls, rs = nil, nil
 local socket = require "socket"
 
-bgm         = love.audio.newSource("snd/bgm.mp3")
-printstr    = ""
--- timeleft = 0
+bgm          = love.audio.newSource("snd/bgm.mp3")
+printstr     = ""
+-- timeleft  = 0
 
 function gameover(game)
 	local you = game.you
@@ -27,7 +27,7 @@ function gameover(game)
 			tcp:send(ss)
 			tcp:close()
 		end
-		Gamestate.switch(Game(), ls, rs, you.wins, me.wins)
+		Gamestate.switch(Game(ls, rs, you.wins, me.wins))
 	end)
 end
 
@@ -83,7 +83,8 @@ end
 
 local Game = Class {}
 
-function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
+function Game:init(leftscheme, rightscheme, ywin, mwin)
+	if self.camera then return end
 	bgm:stop()
 	bgm:setPitch(1)
 	bgm:setVolume(.25)
@@ -94,16 +95,24 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	Timer.clear()
 	Timer.addPeriodic(.5, function()
 		local fine, cl, bl = pcall(function()
+			lfs.load("scratch.lua") ()
 			return lfs.load("colors.lua") (),
 			       lfs.load("balance.lua")()
 		end)
 		if fine then colors, balance = cl, bl end
 	end)
 
+	Powerup.instance = nil
 	Boolet.reset()
 	control.reset()
 	self.isGameOver = false
 	self.camera = Camera()
+	if BLOOM then
+		require "bloom"
+		local xx, yy = .5 * lg.getWidth(), .5 * lg.getHeight()
+		-- local xx, yy= 1024, 1024
+		self.bloom = CreateBloomEffect(xx, yy)
+	end
 
 	local w, h = balance.room[3]*.5, balance.room[4]*.5
 	--LEF
@@ -145,7 +154,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 		end
 
 		Timer.add(count-1, function()
-				Powerup.reset(self)
+				Powerup.reset(self, MaxAmmo)
 		end)
 
 		Timer.add(count, function()
@@ -153,6 +162,7 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 			self.started = true
 			gosnd:play()
 		end)
+
 		Timer.add(count + 1, function()
 			printstr = ""
 		end)
@@ -168,7 +178,16 @@ function Game:enter(last, leftscheme, rightscheme, ywin, mwin)
 	Signals.register("gameover", gameover)
 end
 
+function Game:enter(last)
+end
+
 function Game:update(dt)
+	control.poll(dt)
+	self:tick(dt)
+end
+
+function Game:tick(dt)
+	--ProFi:start()
 	local me, you, camera = self.me, self.you, self.camera
 	-- Round timer
 	if self.started then
@@ -191,7 +210,6 @@ function Game:update(dt)
 	you:startupdate(dt)
 	me:startupdate(dt)
 
-	control.update(dt)
 	Timer.update(dt)
 
 	you:update(dt)
@@ -199,12 +217,13 @@ function Game:update(dt)
 
 	Boolet.updateall(dt, me, you)
 	Powerup.updateall(dt)
+	--ProFi:stop()
 end
 
-require "bloom"
-local xx, yy = .5 * lg.getWidth(), .5 * lg.getHeight()
--- local xx, yy= 1024, 1024
-local bloom = CreateBloomEffect(xx, yy)
+function love.quit()
+	--ProFi:writeReport("rpt.log")
+end
+
 
 local bgimg = lg.newImage("check.png")
 bgimg:setWrap("repeat", "repeat")
@@ -238,7 +257,7 @@ end
 
 printstr = ""
 function Game:draw()
-	local me, you, camera = self.me, self.you, self.camera
+	local me, you, camera, bloom = self.me, self.you, self.camera, self.bloom
 	if BLOOM then
 		bloom:predraw()
 	end
@@ -287,7 +306,7 @@ function Game:keypressed(key, uni)
 		return
 	elseif key == 'escape' then
 		bgm:stop()
-		Gamestate.switch(menu)
+		Gamestate.switch(Pause())
 	end
 
 	control.keyboarddo(key, uni)

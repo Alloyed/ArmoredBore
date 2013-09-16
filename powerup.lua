@@ -1,40 +1,40 @@
-local Class = require "hump.class"
-local lvec = require "hump.vector-light"
+local Class      = require "hump.class"
+local lvec       = require "hump.vector-light"
 local Ringbuffer = require "hump.ringbuffer"
 
-local pwrups = {}
-local pnum = 0
-
 local Powerup = Class { }
+Powerup.respawn    = 10
+Powerup.instance   = nil
 
 function Powerup:init(game, x, y)
 	self.game = game
 	self.x, self.y = x, y
-	self.w = balance.powerupsize
-	pnum = pnum+1
-	self.hsh = string.format("p%d", pnum)
-	pwrups[self.hsh] = self
-	self.t = 999
+	self.w = balance.Powerupsize
+	Powerup.register(self)
 end
 
-function Powerup.reset(game)
-	pwrups = {}
-	pnum = 0
+function Powerup.reset(game, PowerupType)
+	Powerup.instance = nil
+	PowerupType = PowerupType or Powerup
 	local w, h = balance.room[3], balance.room[4]
-	Timer.addPeriodic(10, function()
-		Powerup(game, w/2, h/2)
+	Timer.addPeriodic(Powerup.respawn, function()
+		PowerupType(game, w/2, h/2)
 	end)
 end
 
+function Powerup.register(obj)
+	Powerup.instance = obj
+end
+
 function Powerup.updateall(dt)
-	for k, v in pairs(pwrups) do
-		v:update(dt)
+	if Powerup.instance then
+		Powerup.instance:update(dt)
 	end
 end
 
 function Powerup.drawall()
-	for k, v in pairs(pwrups) do
-		v:draw()
+	if Powerup.instance then
+		Powerup.instance:draw()
 	end
 end
 
@@ -43,15 +43,9 @@ function Powerup:update(dt)
 	for _, dude in ipairs(dudes) do
 		if self:isTouching(dude) then
 			dude:hurt(dude.hp - balance.health - 1)
-			pwrups[self.hsh] = nil
+			Powerup.instance = nil
 		end
 	end
-	--[[
-	self.t = self.t - dt
-	if self.t < dt then
-		pwrups[self.hsh] = nil
-	end
-	-]]
 end
 
 function Powerup:isTouching(dude)

@@ -199,6 +199,7 @@ function Roll:init(a, joyx, joyy)
 	--self.getX = tween.tween_for(self.t, tween.pow(1), tween.range(a.x, a.x + d.x))
 	--self.getY = tween.tween_for(self.t, tween.pow(1), tween.range(a.y, a.y + d.y))
 	self.buzz = love.audio.newSource('snd/dash.wav')
+	self.buzz:setVolume(.85)
 	self.buzz:play()
 end
 

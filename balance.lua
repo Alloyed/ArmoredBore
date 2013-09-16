@@ -2,17 +2,20 @@
 return {
 	margin = 210,
 
+	SERVER = {addr = "192.241.134.64", port = 64083,},
+
 	--room = {0, 0, 2560, 1440},
 	room = {0, 0, 1920, 1080},
 
-	bullet = {
-		speed = 15,
-		dmg = 1,
-		cost = 1,
-		rate = .08,
-		size = 10,
-		number = 3,
-		decay = 4, -- s
+	bullet         = {
+		speed       = 15,
+		dmg         = 1,
+		cost        = 1,
+		rate        = .08,
+		size        = 10,
+		number      = 3,
+		decay       = 4, -- s
+		falloffTime = 4, -- ie. no falloff
 	},
 
 	powerupsize = 40,

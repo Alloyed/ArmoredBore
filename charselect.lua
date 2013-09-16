@@ -22,17 +22,17 @@ for i=1, ljoy.getNumJoysticks() do
 	table.insert(schemes, function()
 		return function(pl)
 				return control.schemes.joypad(pl, 'l', 'l', i)
-		end, "Controller " .. i .. "(left)"
+		end, "Controller " .. i .. "(left)", "TODO"
 	end)
 	table.insert(schemes, function()
 		return function(pl)
 			return control.schemes.joypad(pl, 'r', 'r', i)
- 		end, "Controller " .. i .. "(right)"
+ 		end, "Controller " .. i .. "(right)", "TODO"
 	end)
 	table.insert(schemes, function()
 		return function(pl)
 			return control.schemes.joypad(pl, 'l', 'r', i)
-		end, "Controller " .. i .. "(full)"
+		end, "Controller " .. i .. "(full)", "TODO"
 	end)
 end
 
@@ -73,7 +73,7 @@ local right = {schemes[2]()}
 left[4] = "Player 1 (YELLOW)"
 right[4] = "Player 2 (BLUE)"
 
-local function side(side, align)
+local function controls(side, align)
 	qu.group.push {grow = 'down', align = {align}}
 		qu.Label {text = side[4]}
 		qu.Label {text = side[2]}
@@ -90,16 +90,21 @@ local function side(side, align)
 	qu.group.pop {}
 end
 
+function Menu:enter(prev, flavor)
+	self.ready = true
+end
+
 function Menu:update()
 	local w = lg.getWidth()
 	local n = 300
 	qu.group.push {grow = 'down', pos = {10, 10}, align = {'center'}}
 		qu.group.push {grow = 'right', size = {(w-20)/2, 30}}
-			side(left, 'left')
-			side(right, 'right')
+			controls(left, 'left')
+			controls(right, 'right')
 		qu.group.pop {}
-		if qu.Button {text = "Just Like Play Game", align = {'center'}, size = {'tight'}} then
-			Gamestate.switch(Game(), left[1], right[1])
+		if qu.Button {text = self.ready and "Just Like Play Game" or "Not Ready",
+			           align = {'center'}, size = {'tight'}} then
+			Gamestate.switch(Game(left[1], right[1]))
 		end
 	qu.group.pop {}
 end

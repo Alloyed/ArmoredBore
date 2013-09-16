@@ -1,14 +1,16 @@
+--WW = 1280
+--HH = 720
+WW   = 1280 * .66
+HH   = 720  * .66
 function love.conf(t)
-	t.title = "i sort of wish this was a mech game but it isn't"
-	t.identity = "mech"
+	t.title = "GAMEPRAY"
+	t.identity = "bloomy-circles"
 
-	--t.screen.width = 1280
-	--t.screen.height = 720
-	t.screen.width  = 1280 * .66
-	t.screen.height = 720  * .66
+	t.screen.width  = WW
+	t.screen.height = HH
 	t.screen.fullscreen = false
 	t.screen.vsync = true
-	t.screen.fsaa = 4
+	t.screen.fsaa = 2
 
 	--Do not edit pls
 	-- t.modules.joystick = false

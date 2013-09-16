@@ -18,7 +18,7 @@ end
 function Firing:init(a, t)
 	assert(a)
 	local atype = balance.bullet
-	self.t  = atype.rate * atype.number * .6
+	self.t  = atype.rate * atype.number * .5
 	self.a = a
 	local mgun = Timer.new()
 	mgun:addPeriodic(.016, function() sndfire() end, atype.number)

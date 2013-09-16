@@ -1,22 +1,46 @@
 local json = require "misc.dkjson"
 
-module(..., package.seeall)
+module(..., package.seeall) -- FIXME: module() is deprecated
 
 local joypad = require 'joypad'
 
 local functions = {}
-local updatefn = {}
+local updates = {}
 
 function reset()
 	joypad.init()
 	joypad.setCallbacks({buttonpressed = joystickdo, triggeron = triggerdo})
 	functions = {}
-	updatefn = {}
+	updates = {}
 end
 
-function register(key, fn)
+-- this looks funky but that's why it's hidden in a function
+local function apply(player)
+	local frame = player.frame
+	player.joyx, player.joyy = frame.joyx or 0, frame.joyy or 0
+	if frame.shoot then
+		player:pushmove(player.moves.fire)
+	elseif frame.roll then
+		player:pushmove(player.moves.roll, player.joyx, player.joyy)
+	end
+
+	player.frame = {}
+end
+
+local function _update(updateFn, player, ...)
+	local rest = {...}
+	return function(dt)
+		local f = player.frame
+		for k, v in pairs(updateFn(player, dt, unpack(rest))) do
+			f[k] = v
+		end
+		apply(player)
+	end
+end
+
+function register(key, fn, ...)
 	if key == "update" then
-		table.insert(updatefn, fn)
+		table.insert(updates, _update(fn, ...))
 		return
 	end
 	functions[tokey(unpack(key))] = fn
@@ -59,106 +83,99 @@ function triggerdo(trg)
 	if fn then return fn() end
 end
 
-function update(dt)
+function poll(dt)
 	joypad.update(dt)
-	for _, fn in ipairs(updatefn) do
+	for _, fn in ipairs(updates) do
 		if fn then fn(dt) end
 	end
 end
 
-function makeroll(dude)
+function makeroll(player)
 	return function()
-		dude.movebuf[#dude.movebuf].roll = true
-		dude:pushmove(dude.moves.roll, dude.joyx, dude.joyy)
+		player.frame.roll = true
 	end
 end
 
-function shootat(dude)
+function shootat(player)
 	return function()
-		dude.movebuf[#dude.movebuf].shoot = true
-		dude:pushmove(dude.moves.fire)
+		player.frame.shoot = true
 	end
 end
 
--- this looks funky but that's why it's hidden in a function
-local function apply(player, joyx, joyy)
-	player.joyx, player.joyy = joyx, joyy
-	player.movebuf[#player.movebuf].joy = {joyx, joyy}
-end
-
-function joyupdate(player, stick)
+function joyupdate(player, dt, stick)
 	local deadzone = .25
-	return function()
-		local v = Vec(joypad.getStick(stick))
-		if v:len2() < deadzone * deadzone then
-			apply(player, 0, 0)
-		else
-			apply(player, v.x, v.y)
-		end
+	local v = Vec(joypad.getStick(stick))
+	if v:len2() < deadzone * deadzone then
+		return {joyx = 0,   joyy = 0}
+	else
+		return {joyx = v.x, joyy = v.y}
 	end
 end
 
-function mouseupdate(player)
+function mouseupdate(player, dt)
 	local camera = player.game.camera
-	return function()
-		local x, y = camera:mousepos()
-		local v = Vec((x-player.x) / balance.dashradius ,(y-player.y) / balance.dashradius )
-		if v:len() > 1 then
-			v:normalize_inplace()
-		end
-		apply(player, v.x, v.y)
+	local x, y = camera:mousepos()
+	local v = Vec((x-player.x) / balance.dashradius ,(y-player.y) / balance.dashradius )
+	if v:len() > 1 then
+		v:normalize_inplace()
 	end
+	return {joyx = v.x, joyy = v.y}
 end
 
+-- we left the numpad keys in just in case
 local ks = {
 	-- "kp1" = Vec(-1,  1),
-	down     = Vec( 0,  1),
+	['down']     = Vec( 0,  1),
 	-- "kp3" = Vec( 1,  1),
-	left     = Vec(-1,  0),
+	['left']     = Vec(-1,  0),
 	-- "kp5" = Vec( 0,  0),
-	right    = Vec( 1,  0),
+	['right']    = Vec( 1,  0),
 	-- "kp7" = Vec(-1, -1),
-	up       = Vec( 0, -1)
+	['up']       = Vec( 0, -1)
 	-- "kp9" = Vec( 1, -1)
 }
 
 function kbupdate(player)
-	return function()
-		local v = Vec(0, 0)
-			for key, dist in pairs(ks) do
-			if lk.isDown(key) then
-				v = v + dist
-			end
+	local v = Vec(0, 0)
+		for key, dist in pairs(ks) do
+		if lk.isDown(key) then
+			v = v + dist
 		end
-		v:normalize_inplace()
-		apply(player, v.x, v.y)
 	end
+	v:normalize_inplace()
+	return {joyx = v.x, joyy = v.y}
 end
 
 local function rtime()
 	return math.random() * .4 + .9
 end
 
-function robot(player)
-	local roll  = makeroll(player)
-	local shoot = shootat(player)
-	Timer.add(rtime(), function(fn) shoot() Timer.add(rtime(), fn) end)
+function make_robot()
+	--Timer.add(rtime(), function(fn) shoot() Timer.add(rtime(), fn) end)
 	local dir = 1
 	local joy = Vec(0, 0)
-	return function()
+	return function(player)
+		local f = {}
 		local o = player.other
 		local v = Vec(player.cx-o.cx, player.cy-o.cy):normalized():rotated(dir * math.pi/1.8)
-		if (o.move.name == "firing" and player.move.name == "idle") then
-			roll()
-			if math.random() > .75 then dir = dir * -1 end
+		if player.move.name == "idle" then
+			print(player.ammo)
+			if o.move.name == "firing" then
+				f.roll = true
+				if math.random() < .25 then dir = dir * -1 end
+			elseif player.ammo > 3 and math.random() < player.ammo * .005 then
+				f.shoot = true
+			end
 		end
 		local n = .3
 		joy = (joy * (1 - n)) + (v * n)
-		apply(player, joy.x, joy.y)
+		f.joyx, f.joyy = joy:unpack()
+		return f
 	end
 end
 
 function replay(player, buffa)
+	assert(nil, "XXX")
 	local roll, shoot =
 	makeroll(player), shootat(player)
 	return function()
@@ -183,7 +200,7 @@ if love._os:match("indows") then -- not a massive diff. but it bugs me
 		rx = 3, ry = -4, rt = -6,
 		-- Buttons
 		lb = 7,  rb = 8,
-		ls = 11, rs = 12
+		ls = 11, rs = 12,
 	}
 else
 	xpad = {
@@ -192,7 +209,7 @@ else
 		rx = 4, ry = 5, rt = 6,
 		-- Buttons
 		lb = 5,  rb = 6,
-		ls = 11, rs = 12
+		ls = 11, rs = 12,
 	}
 end
 
@@ -213,14 +230,14 @@ function schemes.joypad(player, joy, buttons, num)
 	register({"trigger", joypad.newTrigger(num, trig, .5)}, shootat(player))
 	register({"joystick", num, bump}, makeroll(player))
 	-- register({"joystick", num, joy3}, switch(player))
-	register("update", joyupdate(player, joypad.newStick(num, joy1, joy2)))
+	register("update", joyupdate, player, joypad.newStick(num, joy1, joy2))
 end
 
 function schemes.moose(player)
 	register({"mouse", "l"}, shootat(player))
 	register({"mouse", "r"}, makeroll(player))
 	-- register({"mouse", "m"}, switch(player))
-	register("update", mouseupdate(player))
+	register("update", mouseupdate, player)
 end
 
 function schemes.numpad(player)
@@ -228,17 +245,17 @@ function schemes.numpad(player)
 	register({"keyboard", "z"}, shootat(player))
 	register({"keyboard", "x"}, makeroll(player))
 	-- register({"keyboard", "kp+"}, switch(player))
-	register("update", kbupdate(player))
+	register("update", kbupdate, player)
 end
 
 function schemes.what(player)
-	register("update", robot(player))
+	register("update", make_robot(), player)
 end
 
 function schemes.replay(player, key)
 	local str = lfs.read("buffa.json")
 	local buf = json.decode(str)
-	register("update", replay(player, buf[key]))
+	register("update", replay, player, buf[key])
 end
 
 

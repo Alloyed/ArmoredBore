@@ -27,6 +27,7 @@ function Dude:init(game)
 		self.boolets = {}
 		self.bnum = 0
 		self.movebuf = {}
+		self.frame = {}
 end
 
 function Dude:setmove(newmove, ...)

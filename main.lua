@@ -23,11 +23,13 @@ balance         = require "balance"
 colors          = require "colors"
 Boolet          = require "boolet"
 Powerup         = require "powerup"
+MaxAmmo         = require "maxammo"
 moves           = require "moves"
 control         = require "control"
 Dude            = require "player"
 Shotgonner      = require "shotgun"
 Game            = require "game"
+Pause           = require "pausemenu"
 CharacterSelect = require "charselect"
 
 minfnt = nil
@@ -37,8 +39,9 @@ hfnt   = nil
 local leftscheme = nil
 local rightscheme = nil
 
-LEADER  = true
-BLOOM   = false
+FSCREEN = not false
+LEADER  = not false
+BLOOM   = not true
 gamewon = false
 
 
@@ -64,10 +67,11 @@ end
 
 
 local mindex = 1
-local mtext  = {"Start game", "LDR", "BLOOM", "Quit"}
+local mtext  = {"Start game", "LDR", "BLOOM", "FSCREEN", "Quit"}
 local mfn    = { function() start() end,
                  function() leaderboards() end,
 					  function() setBloom() end,
+					  function() fullscreen() end,
                  function() love.event.push('quit') end }
 
 -- {{{ Menu
@@ -81,10 +85,32 @@ function setBloom()
 	mtext[3] = "use Bloom: " .. (BLOOM and "on" or "off")
 end
 
+function fullscreen()
+	FSCREEN = not FSCREEN
+	if FSCREEN then
+		local modes = love.graphics.getModes()
+		table.sort(modes, function(a, b)
+			return a.width*a.height > b.width*b.height
+		end)
+		lg.setMode(modes[1]['width'], modes[1]['height'], true, true, 2)
+	else
+		if init then
+			lg.setMode(WW, HH, false, true, 2)
+		else
+			init = true
+		end
+	end
+	mtext[4] = "Fullscreen: " .. (FSCREEN and "on" or "off")
+end
+
 function menu:enter()
 	mindex = 1
+	FSCREEN = not false
+	LEADER  = not false
+	BLOOM   = not true
 	leaderboards()
 	setBloom()
+	fullscreen()
 end
 
 function menu:update(dt)

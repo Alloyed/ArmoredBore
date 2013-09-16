@@ -44,7 +44,7 @@ function Boolet:init(owner)
 	Boolets[self.hsh] = self
 	self.timer = Timer.new()
 	self.live = true
-	Timer.add(.6, function()
+	Timer.add(balance.bullet.falloffTime, function()
 		self.live = false
 	end)
 
