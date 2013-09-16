@@ -18,7 +18,7 @@ function gameover(game)
 	Timer.add(4, function()
 		printstr = ""
 		local ss = json.encode({you = you.movebuf, me = me.movebuf})
-		if LEADER then
+		if config.phoneHome then
 			lfs.write("buffa.json", ss)
 			print("replay logged at buffa.json")
 			local addr, port = "192.241.134.64", 64083
@@ -68,7 +68,6 @@ function gooey(self, bx, ex)
 		y = y + hpbar_w
 	end
 
-
 	-- ammo bar
 	if self.ammo > balance.bullet.cost * balance.bullet.number then
 		lg.setColor(colors.ui)
@@ -84,15 +83,18 @@ end
 local Game = Class {}
 
 function Game:init(leftscheme, rightscheme, ywin, mwin)
+	local ywin, mwin = ywin or 0, mwin or 0
+
+	-- don't do anything if we've already been constructed
 	if self.camera then return end
+
 	bgm:stop()
 	bgm:setPitch(1)
 	bgm:setVolume(.25)
 	bgm:play()
 
-	local ywin, mwin = ywin or 0, mwin or 0
-
 	Timer.clear()
+	-- Debug hotloader.
 	Timer.addPeriodic(.5, function()
 		local fine, cl, bl = pcall(function()
 			lfs.load("scratch.lua") ()
@@ -107,10 +109,9 @@ function Game:init(leftscheme, rightscheme, ywin, mwin)
 	control.reset()
 	self.isGameOver = false
 	self.camera = Camera()
-	if BLOOM then
+	if config.bloom then
 		require "bloom"
 		local xx, yy = .5 * lg.getWidth(), .5 * lg.getHeight()
-		-- local xx, yy= 1024, 1024
 		self.bloom = CreateBloomEffect(xx, yy)
 	end
 
@@ -220,11 +221,6 @@ function Game:tick(dt)
 	--ProFi:stop()
 end
 
-function love.quit()
-	--ProFi:writeReport("rpt.log")
-end
-
-
 local bgimg = lg.newImage("check.png")
 bgimg:setWrap("repeat", "repeat")
 bgimg:setFilter('nearest', 'nearest')
@@ -258,7 +254,7 @@ end
 printstr = ""
 function Game:draw()
 	local me, you, camera, bloom = self.me, self.you, self.camera, self.bloom
-	if BLOOM then
+	if config.bloom then
 		bloom:predraw()
 	end
 
@@ -276,7 +272,7 @@ function Game:draw()
 	end
 
 	draw()
-	if BLOOM then
+	if config.bloom then
 		bloom:enabledrawtobloom()
 		draw()
 		bloom:postdraw()
@@ -293,7 +289,7 @@ function Game:draw()
 	local timeleft = self.timeleft
 	local min = math.floor(timeleft / 60)
 	local sec = math.floor(timeleft) % 60
-	lg.printf(string.format("%d:%d", min, sec), 25, 30, lg.getWidth() - 50, 'center')
+	lg.printf(string.format("%02d:%02d", min, sec), 25, 30, lg.getWidth() - 50, 'center')
 
 	lg.setFont(hfnt)
 	lg.printf(printstr, 25, lg.getHeight() / 2,lg.getWidth() - 50, 'center')

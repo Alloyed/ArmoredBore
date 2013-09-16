@@ -142,10 +142,11 @@ return setmetatable({
 	__index = function(_,k)
 		return ({size = current.size, pos = current.pos})[k]
 	end,
-	__call = function(_, info)
-		assert(type(info) == 'table' and type(info[1]) == 'function')
+	__call = function(_, info, fn)
+		assert(type(info) == 'table')
+		assert(type(fn) == 'function')
 		push(info)
-		info[1]()
+		fn()
 		pop()
 	end,
 })

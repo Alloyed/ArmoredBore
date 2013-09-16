@@ -159,7 +159,6 @@ function make_robot()
 		local o = player.other
 		local v = Vec(player.cx-o.cx, player.cy-o.cy):normalized():rotated(dir * math.pi/1.8)
 		if player.move.name == "idle" then
-			print(player.ammo)
 			if o.move.name == "firing" then
 				f.roll = true
 				if math.random() < .25 then dir = dir * -1 end

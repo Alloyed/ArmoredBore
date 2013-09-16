@@ -7,7 +7,11 @@ function Pause:enter(prev)
 	bgm:setVolume(0)
 end
 
-local pmsg = "GAME PAUSED\n  Press 'ESC' to unpause\n Enter to go back to Main Menu"
+local pmsg = [[
+GAME PAUSED
+Press 'ESC' to unpause
+Enter to go back to Main Menu]]
+
 function Pause:draw()
 	local prev = self.prev
 	if prev.draw then prev:draw() end
@@ -18,7 +22,6 @@ function Pause:draw()
 end
 
 function Pause:keypressed(key, uni)
-	print(key)
 	if key == 'f4' and love.keyboard.isDown('lalt') then
 		print("YOU'RE HERE FOREVER")
 		return
