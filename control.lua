@@ -15,7 +15,7 @@ function reset()
 end
 
 -- this looks funky but that's why it's hidden in a function
-local function apply(player)
+function apply(player)
 	local frame = player.frame
 	player.joyx, player.joyy = frame.joyx or 0, frame.joyy or 0
 	if frame.shoot then
@@ -34,7 +34,6 @@ local function _update(updateFn, player, ...)
 		for k, v in pairs(updateFn(player, dt, unpack(rest))) do
 			f[k] = v
 		end
-		apply(player)
 	end
 end
 

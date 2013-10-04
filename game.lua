@@ -1,7 +1,7 @@
 local tween  = require "tween"
 local json   = require "misc/dkjson"
 local ls, rs = nil, nil
-local socket = require "socket"
+local lube   = require "lube"
 
 bgm          = love.audio.newSource("snd/bgm.mp3")
 printstr     = ""
@@ -107,7 +107,6 @@ function Game:init(leftscheme, rightscheme, ywin, mwin)
 	Powerup.instance = nil
 	Boolet.reset()
 	control.reset()
-	self.isGameOver = false
 	self.camera = Camera()
 	if config.bloom then
 		require "bloom"
@@ -115,9 +114,10 @@ function Game:init(leftscheme, rightscheme, ywin, mwin)
 		self.bloom = CreateBloomEffect(xx, yy)
 	end
 
+	-- Players {{{
 	local w, h = balance.room[3]*.5, balance.room[4]*.5
 	--LEF
-	local you = Dude(self)
+	local you = Shotgonner(self)
 	you.name      = "YELLOW"
 	you.x, you.y  = w - 400, h - 400
 	you.colors    = colors.you
@@ -139,7 +139,9 @@ function Game:init(leftscheme, rightscheme, ywin, mwin)
 	rightscheme(me)
 	self.me, self.you = me, you
 	self.timeleft = balance.roundtime
+	-- }}}
 
+	-- Countdown {{{
 	do
 		local count = balance.initialcountdown
 		printstr = string.format("%d", count)
@@ -168,6 +170,9 @@ function Game:init(leftscheme, rightscheme, ywin, mwin)
 			printstr = ""
 		end)
 	end
+	-- }}}
+
+	self.isGameOver = false
 
 	Signals.clear("gamelost")
 	Signals.register("gamelost", gamelost)
@@ -184,6 +189,10 @@ end
 
 function Game:update(dt)
 	control.poll(dt)
+
+	control.apply(self.me)
+	control.apply(self.you)
+
 	self:tick(dt)
 end
 
@@ -224,27 +233,27 @@ end
 local bgimg = lg.newImage("check.png")
 bgimg:setWrap("repeat", "repeat")
 bgimg:setFilter('nearest', 'nearest')
-
+--[[
 local stripe = lg.newImage("strip.png")
 stripe:setWrap("repeat", "repeat")
 stripe:setFilter('nearest', 'nearest')
-
+-]]
 function bg(camera, back, fore, tl)
 	local sq = 256
 	local bx, by = camera:worldCoords(0, 0)
 	local ex, ey = camera:worldCoords(lg.getMode())
 	local dx, dy = ex - bx, ey - by
 	local q  = lg.newQuad(bx, by, dx, dy, 256, 256)
-	local pq = lg.newQuad((tl * 256), 0, dx, dy, 128, 128)
+	local pq = lg.newQuad((tl * 256), 0, dx, dy, 512, 512)
 	lg.setColor(fore)
-	--lg.drawq(stripe, pq, bx, by)
 
-	lg.setColor(fore)
 	lg.setColorMode('modulate')
 	local x0, y0, x1, y1 = unpack(balance.room)
 	lg.setStencil(function()
 		lg.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
 	end)
+
+	lg.setColor(fore)
 	lg.drawq(bgimg, q, bx, by)
 	lg.setStencil()
 	lg.setColor(colors.ui)

@@ -2,20 +2,7 @@ local qu = require "Quickie"
 -- A character select screen
 local Menu = Class {}
 
-local function wrap(fn, ...)
-	local orig_args = {...}
-	return function(...)
-		local args = {} -- eww imperative arg collection
-		for _, a in ipairs(orig_args) do
-			table.insert(args, a)
-		end
-		for _, a in ipairs({...}) do
-			table.insert(args, a)
-		end
-		return fn(unpack(args))
-	end
-end
-
+-- {{{ schemes
 schemes = setmetatable( {}, {
 	__newindex = function(t, k, v)
 		rawset(t, k, v)
@@ -84,28 +71,53 @@ schemes ['keyboard'] = {
 	"Keyboard (fag)",
 	"Arrow keys to move, X to dodge, Z to fire"
 }
+-- }}}
 
-local left  = {unpack(schemes[config.defaultleft])}
-local right = {unpack(schemes[config.defaultright])}
-left[4]  = "Player 1 (YELLOW)"
-right[4] = "Player 2 (BLUE)"
+-- {{{ UI states
 
-function pairsByKeys (t, f)
-	local a = {}
-	for n in pairs(t) do table.insert(a, n) end
-	table.sort(a, f)
-	local i = 0      -- iterator variable
-	local iter = function ()   -- iterator function
-		i = i + 1
-		if a[i] == nil then return nil
-		else return a[i], t[a[i]]
-		end
+local function Status(status, ret)
+	return function()
+		qu.group.push {grow = 'down', align = {align}}
+			qu.Label {text = status}
+		qu.group.pop  {}
+		return ret
 	end
-	return iter
 end
 
-local function controls(side, align)
-	qu.group.push {grow = 'down', align = {align}}
+local function LobbyList(sock, lobbies)
+	return function()
+		qu.group.push {grow = 'down', align = {align}}
+			qu.Label {text = "join a lobby"}
+			for k, v in pairs(lobbies or {}) do
+				qu.group.push {grow = 'right', size = {150}}
+					qu.Label {text = tostring(v)}
+					if qu.Button {text = 'join game'} and v.guest == false then
+						local p = packets.new(packets.R_JOIN)
+						p.hostname = k
+						sock:send(json.encode(p))
+					end
+				qu.group.pop {}
+			end
+		qu.group.pop  {}
+		return nil
+	end
+end
+
+local function EnteredLobby(lobby, toret)
+	local str = "{\n"
+	table.foreach(lobby, function(k, v)
+		str = str .. "    " .. tostring(k) .. "=" .. tostring(v) .. ",\n"
+	end)
+	str = str .. "}"
+	return Status(str, lobby[toret] and control.schemes.what or nil)
+end
+
+local function Controls(sidename)
+	local side = {unpack(schemes[config['default' .. sidename]])}
+	local ready = false
+	side[4] = sidename
+	return function()
+	qu.group.push {grow = 'down'}
 		qu.Label {text = side[4]}
 		qu.Label {text = side[2]}
 		for key, scht in ipairs(schemes) do
@@ -113,30 +125,132 @@ local function controls(side, align)
 			if qu.Button {text = name} then
 				side[1], side[2] = sch, name -- copy to ref
 				side[3] = decr
-				config['default' .. align] = key
+				config['default' .. sidename] = key
 			end
 		end
 		qu.Label {text = side[3]}
-	qu.group.pop {}
-end
-
-function Menu:enter(prev, flavor)
-	self.ready = true
-end
-
-function Menu:update()
-	local w = lg.getWidth()
-	local n = 300
-	qu.group.push {grow = 'down', pos = {10, 10}, align = {'center'}}
-		qu.group.push {grow = 'right', size = {(w-20)/2, 30}}
-			controls(left, 'left')
-			controls(right, 'right')
-		qu.group.pop {}
-		if qu.Button {text = self.ready and "Just Like Play Game" or "Not Ready",
-			           align = {'center'}, size = {'tight'}} then
-			Gamestate.switch(Game(left[1], right[1]))
+		if qu.Button {text = ready and "Ready" or "Not Ready"} then
+			ready = not ready
+			Signals.emit(sidename .. '-ready', ready)
 		end
 	qu.group.pop {}
+	return ready and side[1] or nil
+	end
+end
+--}}}
+
+-- {{{ Network stuff
+local commands = setmetatable({}, {
+	-- Returns the fallback command. FIXME : log a good warning
+	__index = function(t, k, v)
+		return function() print "Oops" end
+	end,
+	-- Index by packet type, not the packet table
+	__newindex = function(t, k, v)
+		return rawset(t, tostring(k), v)
+	end,
+})
+
+commands[packets.S_HOST] = function(self, data, cid)
+	self.right = Status("Waiting for players. Your lobby id is : " .. data.hostname)
+end
+
+commands[packets.S_LOBBIES] = function(self, data, cid)
+	print("we get lobeats")
+	for k, v in pairs(data.lobbies) do
+		v = setmetatable(v, {
+			__tostring = function(e)
+				return "id " .. k .. ", slot is " .. (v.guest and "CLOSED" or "OPEN")
+			end
+		})
+	end
+	self.left = LobbyList(self.sock, data.lobbies)
+end
+
+commands[packets.LOBBY_FULL] = function(self, data, cid)
+	assert(nil, "Lobby full.")
+end
+
+commands[packets.LOBBY_CHANGED] = function(self, data, cid)
+	local show = EnteredLobby(data.lobby)
+	if self.flavor == 'host' then
+		self.right = show
+	elseif self.flavor == 'join' then
+		self.left = show
+	end
+end
+
+function delegate(self)
+	return function(raw, clientid)
+		local data, err = json.decode(raw)
+		assert(data, err)
+		local key = packets.command(data)
+		return commands[key](self, data, clientid)
+	end
+end
+
+function initSock()
+	local sock = lube.tcpClient()
+	sock.handshake = balance.HANDSHAKE
+	sock:setPing(true, 2, balance.PING)
+	local S = balance.SERVER
+	assert(sock:connect(S.addr, S.port, true))
+	return sock
+end
+
+-- }}}
+
+function Menu:enter(prev, flavor)
+	self.prev = prev
+	local left, right = nil, nil
+	local sock = nil
+
+	if flavor == 'host' then
+		sock = initSock()
+		sock.callbacks.recv = delegate(self)
+		sock:send(json.encode(packets.R_HOST))
+
+		left  = Controls "left"
+		right = Status "Connected to server, waiting for host id..."
+		Signals.register('left-ready', function()
+			sock:send(json.encode(packets.LOBBY_READY))
+		end)
+	elseif flavor == 'join' then
+		sock = initSock()
+		sock.callbacks.recv = delegate(self)
+		sock:send(json.encode(packets.R_LOBBIES))
+
+		left = Status "Populating lobbies"
+		right = Controls "right"
+		Signals.register('right-ready', function()
+			sock:send(json.encode(packets.LOBBY_READY))
+		end)
+	else
+		left  = Controls "left"
+		right = Controls "right"
+	end
+
+	self.sock = sock
+	self.left, self.right = left, right
+	self.flavor = flavor
+end
+
+function Menu:update(dt)
+	local sl, sr = nil, nil
+	local w = lg.getWidth()
+	local n = 300
+	qu.group.push {grow = 'down', pos = {10, 10}, size = {(w-20)/2}, align = {'center'}}
+		qu.group.push {grow = 'right', size = {(w-20)/2, 30}}
+			sl = self.left()
+			sr = self.right()
+		qu.group.pop {}
+		if sl and sr then
+			Gamestate.switch(Game(sl, sr))
+		end
+	qu.group.pop {}
+	if self.sock then
+		self.sock:update(dt)
+	end
 end
 
 function Menu:draw()
@@ -144,6 +258,9 @@ function Menu:draw()
 end
 
 function Menu:keypressed(key, uni)
+	if key == 'escape' then
+		Gamestate.switch(self.prev)
+	end
 	qu.keyboard.pressed(key, uni)
 end
 return Menu

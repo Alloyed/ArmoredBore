@@ -16,9 +16,16 @@ love.audio = ren
 --]]
 
 require "boilerplate"
+
+ProFi:start()
 local dump = require "misc.dump"
+json = require "misc.dkjson"
 local qu   = require "Quickie"
 
+function reload(mod)
+	package.loaded[mod] = nil
+	return require(mod)
+end
 -- We load everything up as constants because dumb
 balance         = require "balance"
 colors          = require "colors"
@@ -31,6 +38,7 @@ Dude            = require "player"
 Shotgonner      = require "shotgun"
 Game            = require "game"
 Pause           = require "pausemenu"
+packets         = reload  "packets"
 CharacterSelect = require "charselect"
 
 -- FIXME font management
@@ -50,11 +58,13 @@ function love.load()
 	'mousepressed', 'mousereleased' }
 
 	Gamestate.registerEvents(all_callbacks)
+	ProFi:stop()
+	ProFi:writeReport('profile.log')
 	Gamestate.switch(menu)
 end
 
 
--- {{{ Menu
+-- {{{ Me
 
 menu = {}
 
@@ -97,6 +107,17 @@ function menu:update(dt)
 	function()
 		if qu.Button(const "Start game") then
 			Gamestate.switch(CharacterSelect())
+		end
+
+		if qu.Button(const "Join game") then
+			CharacterSelect = reload "charselect"
+			Gamestate.switch(CharacterSelect(), 'join')
+		end
+
+		if qu.Button(const "Host game") then
+			packets         = reload  "packets"
+			CharacterSelect = reload "charselect"
+			Gamestate.switch(CharacterSelect(), 'host')
 		end
 
 		if qu.Button(bool "Bloom : " (config.bloom)) then

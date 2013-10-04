@@ -2,7 +2,10 @@
 return {
 	margin = 210,
 
-	SERVER = {addr = "192.241.134.64", port = 64083,},
+	HANDSHAKE = 'hs',
+	PING      = 'ping~',
+	-- SERVER = {addr = '192.241.134.64', port = 64083,},
+	SERVER    = {addr = '127.0.0.1',      port = 64083,},
 
 	--room = {0, 0, 2560, 1440},
 	room = {0, 0, 1920, 1080},

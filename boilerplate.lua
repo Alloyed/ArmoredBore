@@ -6,6 +6,8 @@ Signals   = require "hump.signal"
 Vec       = require "hump.vector"
 Camera    = require "hump.camera"
 
+lube      = require "lube"
+
 ProFi     = require "misc.ProFi"
 
 lg        = love.graphics
