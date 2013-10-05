@@ -1,9 +1,23 @@
 #!/bin/bash
 NAME="bloomy-circles"
 #NAME="${PWD##*/}" #nice default
-LOVEDIR="${HOME}/src/love-0.8.0-win-x86"
+WINDIR="${HOME}/src/love-0.8.0-win-x86"
 FINALDIR="${HOME}/Dropbox/Public/games/${NAME}"
 TMPDIR="/tmp/"
+
+#Get varnames from conf.lua
+luascript="
+	love = {}
+	require 'conf'
+
+	local t = {}
+	love.conf(t)
+	if t.identity then
+		print('NAME='..t.identity)
+	end
+
+"
+eval $(lua -e "$luascript")
 
 # Source
 DOTLOVE="${FINALDIR}/${NAME}.love"
