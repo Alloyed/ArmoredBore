@@ -93,11 +93,15 @@ eval $(lua -e "$luascript")
 
 cd ${DIRNAME:-.}
 if [ -d ".git" ]; then
-	echo "yep it's a git"
-	BRANCH=$(git symbolic-ref --short -q HEAD)
-	if [ "$BRANCH" = "master" ]; then BRANCH="" fi
-	VERSION=$(git describe | sed -e 's/^v//g')
+	gitrepo="yes"
+	if [ "$AUTOPULL" = "yes" ]; then
+		git pull -q
+	fi
+	BRANCH="-$(git symbolic-ref --short -q HEAD)"
+	if [ "$BRANCH" = "master" ]; then BRANCH=""; fi
+	VERSION="-$(git describe | sed -e 's/^v//g')" # rip off 'v' from 'v1.2.3'
 fi
+
 NAME=${NAME:-$(PWD##*/)} # default to the working dir
 
 TMPDIR=${TMPDIR:-"/tmp"}
@@ -112,7 +116,22 @@ eval "WINPKG=$WINPKG"
 DOTLOVE="$FINALDIR/$SRCPKG"
 echo creating $DOTLOVE
 mkdir -p $FINALDIR
-zip -rq $DOTLOVE * # TODO: smart adding. we don't want .swp or .DS_STORE, etc.
+
+shopt -s globstar
+shopt -s nullglob
+for fname in **; do
+	if [ "$gitrepo" = "yes" ]; then
+		if git ls-files --error-unmatch "$fname" &> /dev/null; then
+			zip -q "$DOTLOVE" "$fname"
+		fi
+	else
+		zip -q "$DOTLOVE" "$fname"
+	fi
+done
+shopt -u globstar
+shopt -u nullglob
+
+#zip -rq $DOTLOVE * # TODO: smart adding. we don't want .swp or .DS_STORE, etc.
  
 # Win32
 DOTEXE="$FINALDIR/$WINPKG"
