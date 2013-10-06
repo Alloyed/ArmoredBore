@@ -2,7 +2,11 @@
 --   the first thing that our app loads. This might be dangerous.
 -- TODO look into cases of malformed userconfig.lua files
 -- see also main.lua to see how the config gets used and saved
-config = love.filesystem.load "userconfig.lua" ()
+if love.filesystem then
+	config = love.filesystem.load "userconfig.lua" ()
+else
+	config = {windowedMode = {0, 0}} -- for use in publi.sh
+end
 
 function love.conf(t)
 	t.title = "GAMEPRAY"
